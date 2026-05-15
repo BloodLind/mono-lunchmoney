@@ -1124,5 +1124,5 @@ The result is a local, stateless, Windows-friendly Monobank → Lunch Money brid
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read:
 
-`specs/001-node-cli-init/plan.md`
+`specs/002-mono-lunch-sync/plan.md`
 <!-- SPECKIT END -->
