@@ -1,0 +1,49 @@
+{
+  "name": "mono-lunchmoney",
+  "version": "0.1.0",
+  "description": "Local Windows-friendly Monobank to Lunch Money CLI bridge",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "mono-lunchmoney": "./dist/cli.js"
+  },
+  "main": "./dist/cli.js",
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "check": "npm run build && npm run test && npm run validate:package",
+    "validate:package": "node scripts/validate-package.mjs"
+  },
+  "keywords": [
+    "monobank",
+    "lunch-money",
+    "cli",
+    "scheduler",
+    "budgeting"
+  ],
+  "dependencies": {
+    "commander": "^14.0.2",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "eslint": "^9.39.1",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.47.0",
+    "vitest": "^4.0.8"
+  }
+}
