@@ -11,7 +11,7 @@ describe("setup errors", () => {
     await expect(
       runSetupCommand(
         { config: path.join(mkdtempSync(path.join(os.tmpdir(), "mono-setup-error-")), "config.json") },
-        { env: {}, prompt: async () => "" }
+        { env: {}, prompt: async () => "", stdout: { write: () => true } }
       )
     ).rejects.toBeInstanceOf(CliError);
   });
@@ -24,7 +24,8 @@ describe("setup errors", () => {
           env: { MONO_TOKEN: "mono", LUNCHMONEY_TOKEN: "lm" },
           monoClient: { getClientInfo: async () => ({ accounts: [] }) },
           budgetProvider: fakeBudgetProvider(),
-          prompt: async () => ""
+          prompt: async () => "",
+          stdout: { write: () => true }
         }
       )
     ).rejects.toThrow(/No Monobank/);

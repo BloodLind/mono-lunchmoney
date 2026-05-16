@@ -1,4 +1,9 @@
-import type { AppConfig, AccountMapping } from "../config/config.model.js";
+import {
+  getIgnoredMonobankAccountIds,
+  getSyncableAccountMappings,
+  type AppConfig,
+  type AccountMapping
+} from "../config/config.model.js";
 import type { BudgetProvider } from "../lunchmoney/budget-provider.js";
 import { mapMonoToLunchMoney } from "../mapping/mono-to-lunchmoney.mapper.js";
 import type { StatementClient } from "../monobank/statement-fetcher.js";
@@ -6,6 +11,7 @@ import { fetchAllStatementItems } from "../monobank/statement-fetcher.js";
 import { acquireLockFile, type LockCommand } from "../locking/lock-file.js";
 import { formatFailureRecord, formatSyncRecord, type LogWriter } from "../logging/logger.js";
 import { parseLocalDate } from "../utils/date.js";
+import { getIgnoredTransferMatch } from "./ignored-transactions.js";
 
 export type SyncWindow = {
   from: number;
@@ -26,6 +32,7 @@ export type SyncRunnerOptions = {
   dryRun?: boolean;
   windows?: SyncWindow[];
   rateLimiter?: Parameters<typeof fetchAllStatementItems>[4];
+  onStarted?: () => Promise<void>;
 };
 
 export type AccountSyncResult = {
@@ -33,6 +40,7 @@ export type AccountSyncResult = {
   displayName: string;
   fetchedCount: number;
   submittedCount: number;
+  ignoredTransferCount: number;
   insertedCount?: number;
   duplicateOrIgnoredCount?: number;
   error?: string;
@@ -43,6 +51,7 @@ export type SyncRunResult = {
   accounts: AccountSyncResult[];
   fetchedCount: number;
   submittedCount: number;
+  ignoredTransferCount: number;
   failedCount: number;
 };
 
@@ -52,7 +61,19 @@ export async function runSync(options: SyncRunnerOptions): Promise<SyncRunResult
 
   try {
     await options.logWriter.success(formatSyncRecord("Sync started"));
-    const enabledAccounts = options.config.accounts.filter((account) => account.enabled);
+    await options.onStarted?.();
+    const ignoredAccountIds = getIgnoredMonobankAccountIds(options.config);
+    const ignoredMappedAccounts = options.config.accounts.filter(
+      (account) => account.enabled && ignoredAccountIds.has(account.monoAccountId)
+    );
+    for (const account of ignoredMappedAccounts) {
+      await options.logWriter.success(
+        formatSyncRecord(
+          `Account ${account.lunchMoneyAccountName}: skipped because Monobank account is in ignored list`
+        )
+      );
+    }
+    const enabledAccounts = getSyncableAccountMappings(options.config);
     const windows = clampWindowsToBaseline(
       options.windows ?? [
         buildRecentWindow(options.now ?? new Date(), options.lookbackDays ?? options.config.lookbackDays)
@@ -74,6 +95,10 @@ export async function runSync(options: SyncRunnerOptions): Promise<SyncRunResult
       accounts: results,
       fetchedCount: results.reduce((sum, result) => sum + result.fetchedCount, 0),
       submittedCount: results.reduce((sum, result) => sum + result.submittedCount, 0),
+      ignoredTransferCount: results.reduce(
+        (sum, result) => sum + result.ignoredTransferCount,
+        0
+      ),
       failedCount: results.filter((result) => result.error).length
     };
   } finally {
@@ -113,6 +138,7 @@ async function processAccount(
   let submittedCount = 0;
   let insertedCount = 0;
   let duplicateOrIgnoredCount = 0;
+  let ignoredTransferCount = 0;
 
   try {
     for (const window of windows) {
@@ -124,7 +150,15 @@ async function processAccount(
         options.rateLimiter
       );
       fetchedCount += items.length;
-      const transactions = items.map((item) => mapMonoToLunchMoney(item, account));
+      const filteredItems = items.filter((item) => {
+        const match = getIgnoredTransferMatch(item, options.config.ignoredMonobankAccounts);
+        if (match.matched) {
+          ignoredTransferCount += 1;
+          return false;
+        }
+        return true;
+      });
+      const transactions = filteredItems.map((item) => mapMonoToLunchMoney(item, account));
       submittedCount += transactions.length;
 
       if (!options.dryRun && transactions.length > 0) {
@@ -148,17 +182,30 @@ async function processAccount(
     );
     await options.logWriter.success(
       formatSyncRecord(
-        `Account ${account.lunchMoneyAccountName}: ${
-          options.dryRun ? "dry-run mapped" : "sent"
-        } ${submittedCount} transactions to Lunch Money`
+        `Account ${account.lunchMoneyAccountName}: ignored ${ignoredTransferCount} transfer transactions before Lunch Money`
       )
     );
+    await options.logWriter.success(
+      formatSyncRecord(
+        `Account ${account.lunchMoneyAccountName}: ${
+          options.dryRun ? "dry-run eligible" : "submitted"
+        } ${submittedCount} eligible transactions to Lunch Money`
+      )
+    );
+    if (!options.dryRun) {
+      await options.logWriter.success(
+        formatSyncRecord(
+          `Account ${account.lunchMoneyAccountName}: Lunch Money inserted ${insertedCount} transactions; duplicates/ignored ${duplicateOrIgnoredCount}`
+        )
+      );
+    }
 
     return {
       monoAccountId: account.monoAccountId,
       displayName: account.lunchMoneyAccountName,
       fetchedCount,
       submittedCount,
+      ignoredTransferCount,
       insertedCount: options.dryRun ? undefined : insertedCount,
       duplicateOrIgnoredCount: options.dryRun ? undefined : duplicateOrIgnoredCount
     };
@@ -175,6 +222,7 @@ async function processAccount(
       displayName: account.lunchMoneyAccountName,
       fetchedCount,
       submittedCount,
+      ignoredTransferCount,
       error: message
     };
   }

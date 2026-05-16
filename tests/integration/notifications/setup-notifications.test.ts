@@ -21,6 +21,7 @@ async function runSetupWithAnswers(answers: string[]) {
   return JSON.parse(readFileSync(configPath, "utf8")) as {
     notifications: {
       enabled: boolean;
+      notifyOnStart: boolean;
       notifyOnSuccess: boolean;
       notifyOnFailure: boolean;
     };
@@ -29,24 +30,29 @@ async function runSetupWithAnswers(answers: string[]) {
 
 describe("setup notification prompts", () => {
   it("saves disabled notification defaults", async () => {
-    const config = await runSetupWithAnswers(["", "", "", "yes", "1", ""]);
+    const config = await runSetupWithAnswers(["no", "", "", "", "yes", "1", ""]);
 
     expect(config.notifications).toMatchObject({ enabled: false, notifyOnSuccess: false });
   });
 
   it("saves enabled failure-only notifications", async () => {
-    const config = await runSetupWithAnswers(["", "", "yes", "no", "yes", "1", ""]);
+    const config = await runSetupWithAnswers(["no", "", "", "yes", "no", "yes", "1", ""]);
 
     expect(config.notifications).toMatchObject({
       enabled: true,
+      notifyOnStart: true,
       notifyOnSuccess: false,
       notifyOnFailure: true
     });
   });
 
   it("saves enabled success notifications", async () => {
-    const config = await runSetupWithAnswers(["", "", "yes", "yes", "yes", "1", ""]);
+    const config = await runSetupWithAnswers(["no", "", "", "yes", "yes", "yes", "1", ""]);
 
-    expect(config.notifications).toMatchObject({ enabled: true, notifyOnSuccess: true });
+    expect(config.notifications).toMatchObject({
+      enabled: true,
+      notifyOnStart: true,
+      notifyOnSuccess: true
+    });
   });
 });

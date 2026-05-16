@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { stripAnsi } from "../../../src/cli/color.js";
 import { runConfigShow } from "../../../src/commands/config.command.js";
 
 describe("config show command", () => {
@@ -12,8 +13,9 @@ describe("config show command", () => {
       }
     );
 
-    expect(output).toContain("Config exists: no");
-    expect(output).toContain("mono-lunchmoney");
-    expect(output).not.toContain("MONO_TOKEN");
+    const plain = stripAnsi(output);
+    expect(plain).toMatch(/Config exists:\s+no/);
+    expect(plain).toContain("mono-lunchmoney");
+    expect(plain).not.toContain("MONO_TOKEN");
   });
 });

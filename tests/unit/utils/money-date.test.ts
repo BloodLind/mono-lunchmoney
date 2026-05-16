@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toLocalIsoDate } from "../../../src/utils/date.js";
+import { formatDateOnly, parseFlexibleLocalDate, toLocalIsoDate } from "../../../src/utils/date.js";
 import { minorUnitsToDecimalString } from "../../../src/utils/money.js";
 
 describe("money and date utilities", () => {
@@ -12,5 +12,14 @@ describe("money and date utilities", () => {
   it("formats transaction timestamps as local ISO dates", () => {
     const timestamp = Math.floor(new Date(2026, 4, 15, 10, 0, 0).getTime() / 1000);
     expect(toLocalIsoDate(timestamp)).toBe("2026-05-15");
+  });
+
+  it("parses friendly baseline date inputs into canonical dates", () => {
+    expect(formatDateOnly(parseFlexibleLocalDate("2026/05/01"))).toBe("2026-05-01");
+    expect(formatDateOnly(parseFlexibleLocalDate("01.05.2026"))).toBe("2026-05-01");
+    expect(formatDateOnly(parseFlexibleLocalDate("May 1 2026"))).toBe("2026-05-01");
+    expect(formatDateOnly(parseFlexibleLocalDate("yesterday", new Date(2026, 4, 16)))).toBe(
+      "2026-05-15"
+    );
   });
 });

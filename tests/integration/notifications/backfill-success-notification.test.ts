@@ -29,7 +29,10 @@ describe("backfill success notification", () => {
       }
     );
 
-    expect(adapter.messages).toHaveLength(1);
-    expect(adapter.messages[0].title).toContain("backfill completed");
+    expect(adapter.messages).toHaveLength(2);
+    expect(adapter.messages[0].title).toContain("Backfill started");
+    expect(adapter.messages[0].body).toContain("Backfill started.");
+    expect(adapter.messages[1].title).toContain("Backfill completed");
+    expect(adapter.messages[1].body).not.toContain("Logs:");
   });
 });

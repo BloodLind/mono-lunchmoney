@@ -7,13 +7,26 @@ import {
   EXIT_CODES
 } from "../cli/command-registry.js";
 import { CliError } from "../cli/errors.js";
+import {
+  LUNCH_MONEY_API_DOCS_URL,
+  LUNCH_MONEY_TOKEN_URL,
+  MONOBANK_TOKEN_URL
+} from "../config/tokens.js";
 
 export type HelpDeps = {
   env?: NodeJS.ProcessEnv;
   stdout?: Pick<NodeJS.WriteStream, "write">;
 };
 
-const topics = ["setup", "sync", "scheduler", "config", "backfill", "security"] as const;
+const topics = [
+  "setup",
+  "sync",
+  "scheduler",
+  "config",
+  "credentials",
+  "backfill",
+  "security"
+] as const;
 
 export type HelpFormatOptions = {
   color?: boolean;
@@ -50,16 +63,17 @@ function formatOverviewHelp(style: CliStyle): string {
     bullet(style, "Daily background sync through Windows Task Scheduler."),
     bullet(style, "API tokens stay out of CLI arguments, config display, and logs."),
     "",
-    style.section("Current implementation status"),
+    style.section("Implemented feature set"),
     bullet(
       style,
-      "CLI package, command routing, config paths, scheduler shell, and failure logs are implemented."
+      "Interactive setup maps Monobank sources to existing or newly created Lunch Money assets."
     ),
-    bullet(style, "setup, sync import, and backfill import are command shells for the next feature slice."),
+    bullet(style, "Sync and backfill import mapped transactions with deterministic external_id values."),
+    bullet(style, "Windows notifications can be enabled for sync/backfill starts and outcomes."),
     "",
     style.section("Core commands"),
     command(style, "mono-lunchmoney setup"),
-    "      Interactive account selection and Lunch Money mapping. Not implemented yet.",
+    "      Interactive account selection, Lunch Money mapping, baseline date, and notifications setup.",
     "",
     command(style, 'mono-lunchmoney sync --config "%APPDATA%\\mono-lunchmoney\\config.json" --quiet'),
     "      Non-interactive background import command. Safe target for scheduled jobs.",
@@ -73,20 +87,22 @@ function formatOverviewHelp(style: CliStyle): string {
     command(style, "mono-lunchmoney config show"),
     "      Print sanitized config and runtime file locations.",
     "",
+    command(style, "mono-lunchmoney credentials status"),
+    "      Show protected credential availability without printing token values.",
+    "",
     command(style, "mono-lunchmoney backfill --from 2026-01-01 --to 2026-05-15"),
-    "      Historical import shell for later implementation.",
+    "      Historical import over provider-safe windows with the same idempotency rules as sync.",
     "",
     style.section("Help topics"),
     command(style, "mono-lunchmoney help setup"),
     command(style, "mono-lunchmoney help sync"),
     command(style, "mono-lunchmoney help scheduler"),
     command(style, "mono-lunchmoney help config"),
+    command(style, "mono-lunchmoney help credentials"),
     command(style, "mono-lunchmoney help backfill"),
     command(style, "mono-lunchmoney help security"),
     "",
     style.section("Normal first-run shape"),
-    command(style, 'setx MONO_TOKEN "..."'),
-    command(style, 'setx LUNCHMONEY_TOKEN "..."'),
     command(style, "mono-lunchmoney setup"),
     command(style, "mono-lunchmoney sync"),
     command(style, `mono-lunchmoney scheduler install --daily-at ${DEFAULT_DAILY_AT}`)
@@ -106,16 +122,20 @@ function formatSetupHelp(style: CliStyle): string {
     command(style, "mono-lunchmoney setup"),
     command(style, "mono-lunchmoney setup --reconfigure"),
     "",
-    style.section("Expected future flow"),
-    "  1. Read MONO_TOKEN and LUNCHMONEY_TOKEN from the user environment.",
-    "  2. Validate both API connections.",
-    "  3. Show masked Monobank account/card details.",
-    "  4. Map each tracked source to an existing or new Lunch Money asset.",
-    `  5. Save config with default tag "${DEFAULT_TAG}" and no plain API tokens.`,
+    style.section("Flow"),
+    "  1. If tokens are missing, show where to create them and prompt for values.",
+    "  2. Save validated tokens to protected user-scoped storage for sync/scheduler.",
+    "  3. Validate both API connections.",
+    "  4. Show masked Monobank account/card details.",
+    "  5. Map each tracked source to an existing or new Lunch Money asset.",
+    "  6. Ask for optional baseline date and Windows notification preferences.",
+    "  7. Optionally install the daily Windows scheduled sync task.",
+    `  8. Save config with default tag "${DEFAULT_TAG}" and no plain API tokens.`,
     "",
-    style.section("Current status"),
-    "  The command is registered and discoverable, but the interactive mapping flow is not",
-    "  implemented in this initialization slice."
+    style.section("Token links"),
+    `  Monobank: ${MONOBANK_TOKEN_URL}`,
+    `  Lunch Money app token page: ${LUNCH_MONEY_TOKEN_URL}`,
+    `  Lunch Money API docs: ${LUNCH_MONEY_API_DOCS_URL}`
   ]);
 }
 
@@ -146,9 +166,10 @@ function formatSyncHelp(style: CliStyle): string {
     bullet(style, "Use deterministic external_id values for duplicate prevention."),
     bullet(style, "Do not store local transaction cursors or imported transaction state."),
     "",
-    style.section("Current status"),
-    "  Missing-config handling and background failure logging are implemented. Real Monobank",
-    "  and Lunch Money import work belongs to the next feature slice."
+    style.section("Operational behavior"),
+    "  Loads saved mappings, fetches recent Monobank statements, maps transactions,",
+    "  inserts them into Lunch Money, and relies on Lunch Money external_id dedupe for",
+    "  safe reruns."
   ]);
 }
 
@@ -192,17 +213,45 @@ function formatConfigHelp(style: CliStyle): string {
     style.section("Command"),
     command(style, "mono-lunchmoney config show"),
     command(style, 'mono-lunchmoney config show --config "C:\\path\\config.json"'),
+    command(style, "mono-lunchmoney config notifications status"),
+    command(style, "mono-lunchmoney config notifications enable"),
+    command(style, "mono-lunchmoney config notifications enable --success"),
+    command(style, "mono-lunchmoney config notifications disable"),
     "",
     style.section("Default Windows files"),
     "  %APPDATA%\\mono-lunchmoney\\config.json",
     "  %APPDATA%\\mono-lunchmoney\\sync.log",
     "  %APPDATA%\\mono-lunchmoney\\error.log",
     "  %APPDATA%\\mono-lunchmoney\\sync.lock",
+    "  %APPDATA%\\mono-lunchmoney\\credentials\\*.credential.json",
     "",
     style.section("Rules"),
     bullet(style, "Does not create imported transaction state."),
     bullet(style, "Does not print API token values."),
+    bullet(style, "Shows credential presence only, never credential contents."),
     bullet(style, "Masks sensitive financial identifiers in displayed config.")
+  ]);
+}
+
+function formatCredentialsHelp(style: CliStyle): string {
+  return formatLines([
+    style.title("credentials"),
+    style.muted("==========="),
+    "",
+    style.section("Purpose"),
+    "  Manage reusable Monobank and Lunch Money API tokens in protected user-scoped storage.",
+    "",
+    style.section("Commands"),
+    command(style, "mono-lunchmoney credentials status"),
+    command(style, "mono-lunchmoney credentials set --provider monobank"),
+    command(style, "mono-lunchmoney credentials set --provider lunchmoney"),
+    command(style, "mono-lunchmoney credentials remove --provider all --yes"),
+    "",
+    style.section("Rules"),
+    bullet(style, "Token values are prompted interactively and are not accepted as command-line options."),
+    bullet(style, "Replacement tokens are validated before they are saved."),
+    bullet(style, "Status output reports presence and source only."),
+    bullet(style, "Scheduled sync can reuse saved tokens when it runs as the same Windows user.")
   ]);
 }
 
@@ -221,14 +270,11 @@ function formatBackfillHelp(style: CliStyle): string {
       'mono-lunchmoney backfill --from 2026-01-01 --to 2026-05-15 --config "C:\\path\\config.json"'
     ),
     "",
-    style.section("Expected future behavior"),
+    style.section("Behavior"),
     bullet(style, "Split date ranges into Monobank-compatible windows."),
     bullet(style, "Reuse the same mapping, notes, tags, and external_id rules as sync."),
     bullet(style, "Stay safe to rerun through Lunch Money duplicate prevention."),
-    "",
-    style.section("Current status"),
-    "  The command shell and date options are registered. Historical import is not implemented",
-    "  in this initialization slice."
+    bullet(style, "Respect the configured baseline date if one is set.")
   ]);
 }
 
@@ -245,14 +291,17 @@ function formatSecurityHelp(style: CliStyle): string {
     bullet(style, "Keep config under the current user's profile."),
     bullet(style, "Store only static or semi-static config, never imported transaction state."),
     "",
-    style.section("Recommended token sources"),
-    command(style, 'setx MONO_TOKEN "..."'),
-    command(style, 'setx LUNCHMONEY_TOKEN "..."'),
+    style.section("Token setup"),
+    bullet(style, "Run mono-lunchmoney setup and paste tokens when prompted."),
+    bullet(style, "Setup saves validated tokens to protected user-scoped storage by default."),
+    bullet(style, "Existing MONO_TOKEN and LUNCHMONEY_TOKEN environment values are compatibility input and can be migrated."),
+    bullet(style, "Protected storage failures do not fall back to plaintext config files."),
     "",
     style.section("Background failure visibility"),
     bullet(style, "Check mono-lunchmoney scheduler status for task state."),
     bullet(style, "Check %APPDATA%\\mono-lunchmoney\\error.log for sanitized failure records."),
-    bullet(style, "Desktop/email/push notifications are intentionally a separate follow-up feature.")
+    bullet(style, "Enable Windows desktop notifications for start/failure events with mono-lunchmoney config notifications enable."),
+    bullet(style, "Email, mobile push, and non-Windows desktop notifications are not implemented.")
   ]);
 }
 
@@ -274,10 +323,13 @@ export function formatDetailedHelp(topic?: string, options: HelpFormatOptions = 
     case "config":
     case "configuration":
       return formatConfigHelp(style);
+    case "credentials":
+    case "credential":
+    case "tokens":
+      return formatCredentialsHelp(style);
     case "backfill":
       return formatBackfillHelp(style);
     case "security":
-    case "tokens":
       return formatSecurityHelp(style);
     default:
       throw new CliError(

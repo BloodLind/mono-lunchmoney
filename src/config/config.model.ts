@@ -27,6 +27,7 @@ export const schedulerConfigSchema = z.object({
 
 export const notificationConfigSchema = z.object({
   enabled: z.boolean().default(false),
+  notifyOnStart: z.boolean().default(true),
   notifyOnSuccess: z.boolean().default(false),
   notifyOnFailure: z.boolean().default(true),
   notifyOnPartialFailure: z.boolean().default(true),
@@ -48,6 +49,19 @@ export const accountMappingSchema = z
   })
   .passthrough();
 
+export const ignoredMonobankAccountSchema = z
+  .object({
+    enabled: z.boolean().default(true),
+    monoAccountId: z.string().min(1),
+    monoDisplayName: z.string().min(1),
+    monoType: z.string().optional(),
+    monoCurrencyCode: z.number().int(),
+    currency: z.string().min(3),
+    maskedPan: z.string().optional(),
+    ibanSha256: z.string().length(64).optional()
+  })
+  .passthrough();
+
 export const appConfigSchema = z
   .object({
     schemaVersion: z.number().int().positive().default(1),
@@ -58,11 +72,13 @@ export const appConfigSchema = z
     scheduler: schedulerConfigSchema.optional(),
     notifications: notificationConfigSchema.default({
       enabled: false,
+      notifyOnStart: true,
       notifyOnSuccess: false,
       notifyOnFailure: true,
       notifyOnPartialFailure: true,
       notifyOnLockHeld: true
     }),
+    ignoredMonobankAccounts: z.array(ignoredMonobankAccountSchema).default([]),
     accounts: z.array(accountMappingSchema).default([])
   })
   .passthrough();
@@ -76,6 +92,8 @@ export const schedulerInstallOptionsSchema = z.object({
 export type SchedulerConfig = z.infer<typeof schedulerConfigSchema>;
 export type NotificationConfig = z.infer<typeof notificationConfigSchema>;
 export type AccountMapping = z.infer<typeof accountMappingSchema>;
+export type IgnoredMonobankAccount = z.infer<typeof ignoredMonobankAccountSchema>;
+export type IgnoredTransferSource = IgnoredMonobankAccount;
 export type AppConfig = z.infer<typeof appConfigSchema>;
 export type SchedulerInstallOptions = z.infer<typeof schedulerInstallOptionsSchema>;
 
@@ -87,8 +105,25 @@ export function getEnabledAccountMappings(config: AppConfig): AccountMapping[] {
   return config.accounts.filter((account) => account.enabled);
 }
 
+export function getEnabledIgnoredMonobankAccounts(config: AppConfig): IgnoredMonobankAccount[] {
+  return config.ignoredMonobankAccounts.filter((account) => account.enabled);
+}
+
+export function getIgnoredMonobankAccountIds(config: AppConfig): Set<string> {
+  return new Set(getEnabledIgnoredMonobankAccounts(config).map((account) => account.monoAccountId));
+}
+
+export function getSyncableAccountMappings(config: AppConfig): AccountMapping[] {
+  const ignored = getIgnoredMonobankAccountIds(config);
+  return getEnabledAccountMappings(config).filter(
+    (account) => !ignored.has(account.monoAccountId)
+  );
+}
+
 export function assertHasEnabledAccountMapping(config: AppConfig): void {
-  if (getEnabledAccountMappings(config).length === 0) {
-    throw new Error("Config must contain at least one enabled account mapping.");
+  if (getSyncableAccountMappings(config).length === 0) {
+    throw new Error(
+      "Config must contain at least one enabled account mapping that is not ignored."
+    );
   }
 }

@@ -2,6 +2,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { stripAnsi } from "../../../src/cli/color.js";
 import { runConfigShow } from "../../../src/commands/config.command.js";
 import { appConfig } from "../../fixtures/config.js";
 
@@ -14,8 +15,9 @@ describe("config show integration", () => {
 
     runConfigShow({ config: configPath }, { env: { APPDATA: root }, stdout: { write: (chunk: string) => void (output += chunk) } });
 
-    expect(output).toContain("Config exists: yes");
-    expect(output).toContain("Monobank Black UAH");
-    expect(output).not.toContain("MONO_TOKEN");
+    const plain = stripAnsi(output);
+    expect(plain).toMatch(/Config exists:\s+yes/);
+    expect(plain).toContain("Monobank Black UAH");
+    expect(plain).not.toContain("MONO_TOKEN");
   });
 });

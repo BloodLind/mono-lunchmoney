@@ -2,6 +2,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { stripAnsi } from "../../../src/cli/color.js";
 import {
   runConfigNotificationsDisable,
   runConfigNotificationsEnable,
@@ -19,14 +20,21 @@ describe("config notifications command", () => {
 
     await runConfigNotificationsEnable({ config: configPath, success: true }, deps);
     let saved = JSON.parse(readFileSync(configPath, "utf8")) as {
-      notifications: { enabled: boolean; notifyOnSuccess: boolean };
+      notifications: { enabled: boolean; notifyOnStart: boolean; notifyOnSuccess: boolean };
       accounts: unknown[];
     };
-    expect(saved.notifications).toMatchObject({ enabled: true, notifyOnSuccess: true });
+    expect(saved.notifications).toMatchObject({
+      enabled: true,
+      notifyOnStart: true,
+      notifyOnSuccess: true
+    });
     expect(saved.accounts).toHaveLength(1);
 
     runConfigNotificationsStatus({ config: configPath }, deps);
-    expect(output).toContain("Notifications enabled: yes");
+    const plain = stripAnsi(output);
+    expect(plain).toContain("Notification Settings");
+    expect(plain).toMatch(/Notifications enabled:\s+yes/);
+    expect(plain).toMatch(/Notify on start:\s+yes/);
 
     await runConfigNotificationsDisable({ config: configPath }, deps);
     saved = JSON.parse(readFileSync(configPath, "utf8")) as {

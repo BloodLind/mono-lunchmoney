@@ -17,6 +17,7 @@ Expected setup behavior:
 - Setup asks whether Windows notifications should be enabled.
 - Notifications default to disabled.
 - If enabled, setup asks whether successful sync completion should notify.
+- Setup accepts friendly baseline date input and stores it as `YYYY-MM-DD`.
 - The saved config contains notification settings but no tokens.
 
 ## Enable Or Disable Later
@@ -37,7 +38,8 @@ Expected result:
 Example status output:
 
 ```text
-Notifications: enabled
+Notification settings
+Notifications enabled: yes
 Notify on success: no
 Notify on failure: yes
 Notify on partial failure: yes

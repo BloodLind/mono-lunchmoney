@@ -6,6 +6,7 @@ import { createProgram } from "./cli/program.js";
 import { exitCodeFor, messageFor } from "./cli/errors.js";
 import { createBackfillCommand } from "./commands/backfill.command.js";
 import { createConfigCommand } from "./commands/config.command.js";
+import { createCredentialsCommand } from "./commands/credentials.command.js";
 import { createHelpCommand } from "./commands/help.command.js";
 import { createSchedulerCommand } from "./commands/scheduler.command.js";
 import { createSetupCommand } from "./commands/setup.command.js";
@@ -14,10 +15,11 @@ import { createSyncCommand } from "./commands/sync.command.js";
 export function createCliProgram() {
   const program = createProgram();
   program.addCommand(createSetupCommand());
-  program.addCommand(createSyncCommand({ stderr: process.stderr }));
-  program.addCommand(createBackfillCommand());
+  program.addCommand(createSyncCommand({ stdout: process.stdout, stderr: process.stderr }));
+  program.addCommand(createBackfillCommand({ stdout: process.stdout, stderr: process.stderr }));
   program.addCommand(createSchedulerCommand({ stdout: process.stdout }));
   program.addCommand(createConfigCommand({ stdout: process.stdout }));
+  program.addCommand(createCredentialsCommand({ stdout: process.stdout }));
   program.addCommand(createHelpCommand({ stdout: process.stdout }));
   return program;
 }

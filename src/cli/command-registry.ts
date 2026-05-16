@@ -15,4 +15,12 @@ export const EXIT_CODES = {
 
 export type ExitCode = (typeof EXIT_CODES)[keyof typeof EXIT_CODES];
 
-export const COMMAND_NAMES = ["setup", "sync", "backfill", "scheduler", "config", "help"] as const;
+export const COMMAND_NAMES = [
+  "setup",
+  "sync",
+  "backfill",
+  "scheduler",
+  "config",
+  "credentials",
+  "help"
+] as const;

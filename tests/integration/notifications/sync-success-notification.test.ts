@@ -29,7 +29,10 @@ describe("sync success notification", () => {
       }
     );
 
-    expect(adapter.messages).toHaveLength(1);
-    expect(adapter.messages[0].title).toContain("sync completed");
+    expect(adapter.messages).toHaveLength(2);
+    expect(adapter.messages[0].title).toContain("Sync started");
+    expect(adapter.messages[0].body).toContain("Sync started.");
+    expect(adapter.messages[1].title).toContain("Sync completed");
+    expect(adapter.messages[1].body).not.toContain("Logs:");
   });
 });

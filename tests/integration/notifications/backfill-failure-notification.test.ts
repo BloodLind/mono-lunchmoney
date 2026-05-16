@@ -27,7 +27,9 @@ describe("backfill failure notification", () => {
       )
     ).rejects.toThrow(/account failures/);
 
-    expect(adapter.messages).toHaveLength(1);
-    expect(adapter.messages[0].title).toContain("backfill completed with failures");
+    expect(adapter.messages).toHaveLength(2);
+    expect(adapter.messages[0].title).toContain("Backfill started");
+    expect(adapter.messages[1].title).toContain("Backfill completed with failures");
+    expect(adapter.messages[1].body).not.toContain("Logs:");
   });
 });

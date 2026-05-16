@@ -4,7 +4,11 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseAppConfig } from "../../../src/config/config.model.js";
 import { writeConfig } from "../../../src/config/config.writer.js";
-import { getNotificationConfig } from "../../../src/notifications/notification-config.js";
+import {
+  enableNotifications,
+  getNotificationConfig,
+  shouldNotify
+} from "../../../src/notifications/notification-config.js";
 import { appConfig } from "../../fixtures/config.js";
 
 describe("notification config", () => {
@@ -13,6 +17,7 @@ describe("notification config", () => {
 
     expect(getNotificationConfig(config.notifications)).toEqual({
       enabled: false,
+      notifyOnStart: true,
       notifyOnSuccess: false,
       notifyOnFailure: true,
       notifyOnPartialFailure: true,
@@ -25,11 +30,25 @@ describe("notification config", () => {
 
     expect(config.notifications).toEqual({
       enabled: true,
+      notifyOnStart: true,
       notifyOnSuccess: false,
       notifyOnFailure: true,
       notifyOnPartialFailure: true,
       notifyOnLockHeld: true
     });
+  });
+
+  it("enables start notifications by default but not for failure-only mode", () => {
+    expect(enableNotifications()).toMatchObject({
+      enabled: true,
+      notifyOnStart: true
+    });
+    expect(enableNotifications({ failureOnly: true })).toMatchObject({
+      enabled: true,
+      notifyOnStart: false
+    });
+    expect(shouldNotify({ enabled: true }, "sync-started")).toBe(true);
+    expect(shouldNotify({ enabled: true, notifyOnStart: false }, "sync-started")).toBe(false);
   });
 
   it("writes token-free notification config", async () => {
@@ -42,6 +61,7 @@ describe("notification config", () => {
         ...appConfig({
         notifications: {
           enabled: true,
+          notifyOnStart: true,
           notifyOnSuccess: true,
           notifyOnFailure: true,
           notifyOnPartialFailure: true,

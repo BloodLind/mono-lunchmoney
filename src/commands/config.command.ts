@@ -4,6 +4,7 @@ import { writeConfig, withNotificationConfig } from "../config/config.writer.js"
 import { resolveRuntimePaths } from "../config/paths.js";
 import { EXIT_CODES } from "../cli/command-registry.js";
 import { CliError } from "../cli/errors.js";
+import { createCommandUi } from "../cli/ui.js";
 import {
   disableNotifications,
   enableNotifications,
@@ -28,7 +29,7 @@ export type ConfigDeps = {
 export function runConfigShow(options: ConfigShowOptions, deps: ConfigDeps = {}): void {
   const paths = resolveRuntimePaths({ configPath: options.config, env: deps.env });
   const loaded = loadConfig(paths.configPath);
-  const output = formatConfigShow(paths, loaded);
+  const output = formatConfigShow(paths, loaded, deps.env);
   deps.stdout?.write(output);
 }
 
@@ -47,7 +48,7 @@ export async function runConfigNotificationsEnable(
     failureOnly: options.failureOnly
   });
   await writeConfig(paths.configPath, withNotificationConfig(loaded.config, notifications));
-  deps.stdout?.write(formatNotificationStatus(notifications));
+  deps.stdout?.write(formatNotificationStatus(notifications, deps.env));
 }
 
 export async function runConfigNotificationsDisable(
@@ -62,7 +63,7 @@ export async function runConfigNotificationsDisable(
 
   const notifications = disableNotifications();
   await writeConfig(paths.configPath, withNotificationConfig(loaded.config, notifications));
-  deps.stdout?.write(formatNotificationStatus(notifications));
+  deps.stdout?.write(formatNotificationStatus(notifications, deps.env));
 }
 
 export function runConfigNotificationsStatus(
@@ -75,17 +76,32 @@ export function runConfigNotificationsStatus(
     throw new CliError(`Config not found: ${paths.configPath}`, EXIT_CODES.USER_ERROR);
   }
 
-  deps.stdout?.write(formatNotificationStatus(getNotificationConfig(loaded.config.notifications)));
+  deps.stdout?.write(formatNotificationStatus(getNotificationConfig(loaded.config.notifications), deps.env));
 }
 
-export function formatNotificationStatus(notifications: ReturnType<typeof getNotificationConfig>): string {
+export function formatNotificationStatus(
+  notifications: ReturnType<typeof getNotificationConfig>,
+  env: NodeJS.ProcessEnv = process.env
+): string {
+  const ui = createCommandUi(env);
   return [
-    "Notification settings",
-    `Notifications enabled: ${notifications.enabled ? "yes" : "no"}`,
-    `Notify on success: ${notifications.notifyOnSuccess ? "yes" : "no"}`,
-    `Notify on failure: ${notifications.notifyOnFailure ? "yes" : "no"}`,
-    `Notify on partial failure: ${notifications.notifyOnPartialFailure ? "yes" : "no"}`,
-    `Notify on lock held: ${notifications.notifyOnLockHeld ? "yes" : "no"}`
+    ui.title("Notification Settings"),
+    "",
+    ...ui.keyValues([
+      {
+        label: "Notifications enabled",
+        value: notifications.enabled ? "yes" : "no",
+        tone: notifications.enabled ? "success" : "muted"
+      },
+      { label: "Notify on start", value: notifications.notifyOnStart ? "yes" : "no" },
+      { label: "Notify on success", value: notifications.notifyOnSuccess ? "yes" : "no" },
+      { label: "Notify on failure", value: notifications.notifyOnFailure ? "yes" : "no" },
+      {
+        label: "Notify on partial failure",
+        value: notifications.notifyOnPartialFailure ? "yes" : "no"
+      },
+      { label: "Notify on lock held", value: notifications.notifyOnLockHeld ? "yes" : "no" }
+    ])
   ].join("\n") + "\n";
 }
 

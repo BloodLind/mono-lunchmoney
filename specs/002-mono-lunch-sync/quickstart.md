@@ -3,8 +3,8 @@
 ## Prerequisites
 
 - Node.js `>=20.19.0`.
-- Monobank personal API token in `MONO_TOKEN`.
-- Lunch Money developer token in `LUNCHMONEY_TOKEN`.
+- Monobank personal API token from `https://api.monobank.ua/`.
+- Lunch Money developer token from `https://my.lunchmoney.app/developers`.
 - Windows for scheduler install/status/uninstall smoke tests.
 
 ## Development Setup
@@ -22,26 +22,25 @@ npm link
 mono-lunchmoney --help
 ```
 
-## Environment Variables
-
-```powershell
-setx MONO_TOKEN "<your-monobank-token>"
-setx LUNCHMONEY_TOKEN "<your-lunchmoney-token>"
-```
-
-Open a new terminal after `setx` so the variables are available to the CLI.
-Do not pass either token as a command-line option.
-
 ## First-Time Setup
 
 ```powershell
 mono-lunchmoney setup
 ```
 
+Setup shows token links, prompts for missing tokens, validates both providers,
+and can save entered tokens to the Windows user environment for future sync and
+scheduler runs. Do not pass either token as a command-line option.
+
 Expected output shape:
 
 ```text
-Found Monobank accounts:
+API token setup
+Monobank token: open https://api.monobank.ua/ and create/copy your personal API token.
+Lunch Money token: open https://my.lunchmoney.app/developers in the app and create/copy a developer API token.
+Connecting to Monobank...
+Connecting to Lunch Money...
+Found Monobank accounts/cards:
 [1] BLACK UAH 4444******1111 | balance 25430.20 UAH
 Config saved: C:\Users\<you>\AppData\Roaming\mono-lunchmoney\config.json
 Tracked mappings:
@@ -53,8 +52,10 @@ Expected result:
 - Monobank sources are displayed with masked identifiers.
 - Each tracked source is mapped to an existing or newly created Lunch Money
   manual account.
-- An optional baseline date can be saved as `baselineDate`; sync and backfill
-  will not fetch Monobank statements before this `YYYY-MM-DD` date.
+- An optional baseline date can be entered in common formats such as
+  `2026-05-01`, `01.05.2026`, `May 1 2026`, `today`, or `yesterday`. It is saved
+  as `baselineDate` in `YYYY-MM-DD`; sync and backfill will not fetch Monobank
+  statements before this date.
 - `%APPDATA%\mono-lunchmoney\config.json` is written without API tokens.
 - The final summary contains only sanitized identifiers.
 

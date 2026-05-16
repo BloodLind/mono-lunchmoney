@@ -2,9 +2,16 @@ import { Command } from "commander";
 import { EXIT_CODES } from "../cli/command-registry.js";
 import { CliError } from "../cli/errors.js";
 import { loadConfig } from "../config/config.loader.js";
+import { getSyncableAccountMappings } from "../config/config.model.js";
 import { resolveRuntimePaths } from "../config/paths.js";
-import { resolveProviderTokens } from "../config/tokens.js";
-import { createFileLogWriter, writeFailureRecord, type LogWriter } from "../logging/logger.js";
+import { createDefaultCredentialStore, resolveProviderTokens } from "../config/tokens.js";
+import type { CredentialStore } from "../credentials/credential-store.js";
+import {
+  createFileLogWriter,
+  withConsoleLogWriter,
+  writeFailureRecord,
+  type LogWriter
+} from "../logging/logger.js";
 import type { BudgetProvider } from "../lunchmoney/budget-provider.js";
 import { LunchMoneyV1Client } from "../lunchmoney/lunchmoney-v1-client.js";
 import { MonobankClient } from "../monobank/mono-client.js";
@@ -24,6 +31,7 @@ export type SyncOptions = {
 
 export type SyncDeps = {
   env?: NodeJS.ProcessEnv;
+  stdout?: Pick<NodeJS.WriteStream, "write">;
   stderr?: Pick<NodeJS.WriteStream, "write">;
   statementClient?: StatementClient;
   budgetProvider?: BudgetProvider;
@@ -31,12 +39,18 @@ export type SyncDeps = {
   notificationAdapter?: NotificationAdapter;
   rateLimiter?: Parameters<typeof runSync>[0]["rateLimiter"];
   now?: Date;
+  credentialStore?: CredentialStore;
+  createStatementClient?: (token: string) => StatementClient;
+  createBudgetProvider?: (token: string) => BudgetProvider;
 };
 
 export async function runSyncCommand(options: SyncOptions, deps: SyncDeps = {}): Promise<void> {
   const paths = resolveRuntimePaths({ configPath: options.config, env: deps.env });
   const loaded = loadConfig(paths.configPath);
-  const logWriter = deps.logWriter ?? createFileLogWriter(paths.syncLogPath, paths.errorLogPath);
+  const baseLogWriter = deps.logWriter ?? createFileLogWriter(paths.syncLogPath, paths.errorLogPath);
+  const logWriter = options.quiet
+    ? baseLogWriter
+    : withConsoleLogWriter(baseLogWriter, { stdout: deps.stdout, stderr: deps.stderr });
 
   if (!loaded.exists) {
     const message = `Config not found: ${paths.configPath}`;
@@ -56,15 +70,29 @@ export async function runSyncCommand(options: SyncOptions, deps: SyncDeps = {}):
   let alreadyNotified = false;
 
   try {
-    const enabledAccounts = loaded.config.accounts.filter((account) => account.enabled);
+    const enabledAccounts = getSyncableAccountMappings(loaded.config);
     if (enabledAccounts.length === 0) {
-      throw new CliError("Config has no enabled account mappings.", EXIT_CODES.USER_ERROR);
+      throw new CliError(
+        "Config has no enabled account mappings outside the ignored Monobank account list.",
+        EXIT_CODES.USER_ERROR
+      );
     }
 
     const tokens =
-      deps.statementClient && deps.budgetProvider ? undefined : resolveProviderTokens(deps.env);
-    const monoClient = deps.statementClient ?? new MonobankClient(tokens!.monoToken);
-    const budgetProvider = deps.budgetProvider ?? new LunchMoneyV1Client(tokens!.lunchMoneyToken);
+      deps.statementClient && deps.budgetProvider
+        ? undefined
+        : await resolveProviderTokens(
+            deps.env,
+            deps.credentialStore ?? createDefaultCredentialStore(deps.env ?? process.env)
+          );
+    const monoClient =
+      deps.statementClient ??
+      (deps.createStatementClient ?? ((token: string) => new MonobankClient(token)))(tokens!.monoToken);
+    const budgetProvider =
+      deps.budgetProvider ??
+      (deps.createBudgetProvider ?? ((token: string) => new LunchMoneyV1Client(token)))(
+        tokens!.lunchMoneyToken
+      );
     const lookbackDays = options.lookbackDays === undefined ? undefined : Number(options.lookbackDays);
     if (
       lookbackDays !== undefined &&
@@ -85,7 +113,21 @@ export async function runSyncCommand(options: SyncOptions, deps: SyncDeps = {}):
       lookbackDays,
       dryRun: options.dryRun,
       rateLimiter:
-        deps.rateLimiter ?? (deps.statementClient ? undefined : { rateLimiter: new MonoRateLimiter() })
+        deps.rateLimiter ?? (deps.statementClient ? undefined : { rateLimiter: new MonoRateLimiter() }),
+      onStarted: () =>
+        notifySyncEvent({
+          config: loaded.config.notifications,
+          event: {
+            type: "sync-started",
+            sourceCommand: "sync",
+            quiet: Boolean(options.quiet),
+            summary: "Sync started.",
+            logPath: paths.syncLogPath,
+            occurredAt: new Date()
+          },
+          adapter: notificationAdapter,
+          logWriter
+        })
     });
 
     if (result.hadFailure) {

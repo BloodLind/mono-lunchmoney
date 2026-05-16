@@ -6,6 +6,11 @@ export type LogWriter = {
   error(line: string): Promise<void>;
 };
 
+export type ConsoleLogStreams = {
+  stdout?: Pick<NodeJS.WriteStream, "write">;
+  stderr?: Pick<NodeJS.WriteStream, "write">;
+};
+
 export type FailureRecord = {
   timestamp?: Date;
   source: string;
@@ -51,6 +56,22 @@ export function createFileLogWriter(syncLogPath: string, errorLogPath: string): 
     },
     async error(line: string) {
       await appendTextCreatingParent(errorLogPath, sanitizeText(line));
+    }
+  };
+}
+
+export function withConsoleLogWriter(
+  writer: LogWriter,
+  streams: ConsoleLogStreams
+): LogWriter {
+  return {
+    async success(line: string) {
+      await writer.success(line);
+      streams.stdout?.write(sanitizeText(line));
+    },
+    async error(line: string) {
+      await writer.error(line);
+      streams.stderr?.write(sanitizeText(line));
     }
   };
 }

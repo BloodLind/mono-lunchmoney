@@ -2,8 +2,15 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { stripAnsi } from "../../../src/cli/color.js";
 import { formatConfigShow, loadConfig, sanitizedConfigSummary } from "../../../src/config/config.loader.js";
+import {
+  getEnabledIgnoredMonobankAccounts,
+  getSyncableAccountMappings,
+  parseAppConfig
+} from "../../../src/config/config.model.js";
 import { resolveRuntimePaths } from "../../../src/config/paths.js";
+import { accountMapping, appConfig, ignoredMonobankAccount } from "../../fixtures/config.js";
 
 function validConfig() {
   return {
@@ -56,10 +63,54 @@ describe("config loader", () => {
       configPath: "C:\\missing\\config.json",
       env: { APPDATA: "C:\\Users\\Ada\\AppData\\Roaming" }
     });
-    const output = formatConfigShow(paths, { exists: false, configPath: paths.configPath });
+    const output = stripAnsi(formatConfigShow(paths, { exists: false, configPath: paths.configPath }));
 
-    expect(output).toContain("Config exists: no");
-    expect(output).toContain("run mono-lunchmoney setup");
+    expect(output).toMatch(/Config exists:\s+no/);
+    expect(output).toContain("Run mono-lunchmoney setup");
     expect(output).not.toContain("MONO_TOKEN");
+  });
+
+  it("defaults ignored transfer sources to an empty list", () => {
+    const parsed = parseAppConfig({
+      schemaVersion: 1,
+      lunchMoneyApiVersion: "v1",
+      lookbackDays: 31,
+      defaultTag: "monobank-sync",
+      accounts: []
+    });
+
+    expect(parsed.ignoredMonobankAccounts).toEqual([]);
+  });
+
+  it("rejects malformed ignored transfer source IBAN hashes", () => {
+    expect(() =>
+      parseAppConfig(
+        appConfig({
+          ignoredMonobankAccounts: [ignoredMonobankAccount({ ibanSha256: "not-a-sha256" })]
+        })
+      )
+    ).toThrow();
+  });
+
+  it("derives enabled ignored sources and syncable mappings", () => {
+    const config = appConfig({
+      ignoredMonobankAccounts: [
+        ignoredMonobankAccount({ monoAccountId: "ignored-enabled" }),
+        ignoredMonobankAccount({ enabled: false, monoAccountId: "ignored-disabled" })
+      ],
+      accounts: [
+        accountMapping({ monoAccountId: "ignored-enabled" }),
+        accountMapping({ monoAccountId: "ignored-disabled", lunchMoneyAssetId: 222 }),
+        accountMapping({ monoAccountId: "normal", lunchMoneyAssetId: 333 })
+      ]
+    });
+
+    expect(getEnabledIgnoredMonobankAccounts(config).map((account) => account.monoAccountId)).toEqual([
+      "ignored-enabled"
+    ]);
+    expect(getSyncableAccountMappings(config).map((account) => account.monoAccountId)).toEqual([
+      "ignored-disabled",
+      "normal"
+    ]);
   });
 });

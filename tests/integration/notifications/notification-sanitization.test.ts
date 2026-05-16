@@ -31,9 +31,9 @@ describe("notification sanitization", () => {
       )
     ).rejects.toThrow();
 
-    const message = `${adapter.messages[0].title}\n${adapter.messages[0].body}`;
-    expect(message).not.toContain("secret");
-    expect(message).not.toContain("4444333322221111");
-    expect(message).toContain("4444...1111");
+    const output = adapter.messages.map((message) => `${message.title}\n${message.body}`).join("\n");
+    expect(output).not.toContain("secret");
+    expect(output).not.toContain("4444333322221111");
+    expect(output).toContain("4444...1111");
   });
 });

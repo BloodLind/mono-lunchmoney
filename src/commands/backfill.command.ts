@@ -2,9 +2,11 @@ import { Command } from "commander";
 import { CliError } from "../cli/errors.js";
 import { EXIT_CODES } from "../cli/command-registry.js";
 import { loadConfig } from "../config/config.loader.js";
+import { getSyncableAccountMappings } from "../config/config.model.js";
 import { resolveRuntimePaths } from "../config/paths.js";
-import { resolveProviderTokens } from "../config/tokens.js";
-import { createFileLogWriter, type LogWriter } from "../logging/logger.js";
+import { createDefaultCredentialStore, resolveProviderTokens } from "../config/tokens.js";
+import type { CredentialStore } from "../credentials/credential-store.js";
+import { createFileLogWriter, withConsoleLogWriter, type LogWriter } from "../logging/logger.js";
 import type { BudgetProvider } from "../lunchmoney/budget-provider.js";
 import { LunchMoneyV1Client } from "../lunchmoney/lunchmoney-v1-client.js";
 import { MonobankClient } from "../monobank/mono-client.js";
@@ -26,11 +28,16 @@ export type BackfillOptions = {
 
 export type BackfillDeps = {
   env?: NodeJS.ProcessEnv;
+  stdout?: Pick<NodeJS.WriteStream, "write">;
+  stderr?: Pick<NodeJS.WriteStream, "write">;
   statementClient?: StatementClient;
   budgetProvider?: BudgetProvider;
   logWriter?: LogWriter;
   notificationAdapter?: NotificationAdapter;
   rateLimiter?: Parameters<typeof runSync>[0]["rateLimiter"];
+  credentialStore?: CredentialStore;
+  createStatementClient?: (token: string) => StatementClient;
+  createBudgetProvider?: (token: string) => BudgetProvider;
 };
 
 export async function runBackfillCommand(
@@ -46,27 +53,61 @@ export async function runBackfillCommand(
   if (!loaded.exists) {
     throw new CliError(`Config not found: ${paths.configPath}`, EXIT_CODES.USER_ERROR);
   }
+  if (getSyncableAccountMappings(loaded.config).length === 0) {
+    throw new CliError(
+      "Config has no enabled account mappings outside the ignored Monobank account list.",
+      EXIT_CODES.USER_ERROR
+    );
+  }
 
-  const logWriter = deps.logWriter ?? createFileLogWriter(paths.syncLogPath, paths.errorLogPath);
+  const baseLogWriter = deps.logWriter ?? createFileLogWriter(paths.syncLogPath, paths.errorLogPath);
+  const logWriter = options.quiet
+    ? baseLogWriter
+    : withConsoleLogWriter(baseLogWriter, { stdout: deps.stdout, stderr: deps.stderr });
   const notificationAdapter = deps.notificationAdapter ?? new WindowsNotifier();
   let alreadyNotified = false;
 
   try {
     const tokens =
-      deps.statementClient && deps.budgetProvider ? undefined : resolveProviderTokens(deps.env);
+      deps.statementClient && deps.budgetProvider
+        ? undefined
+        : await resolveProviderTokens(
+            deps.env,
+            deps.credentialStore ?? createDefaultCredentialStore(deps.env ?? process.env)
+          );
     const windows = splitBackfillWindows(options.from, options.to);
     const result = await runSync({
       mode: "backfill",
       config: loaded.config,
       configPath: paths.configPath,
       lockPath: paths.lockPath,
-      statementClient: deps.statementClient ?? new MonobankClient(tokens!.monoToken),
-      budgetProvider: deps.budgetProvider ?? new LunchMoneyV1Client(tokens!.lunchMoneyToken),
+      statementClient:
+        deps.statementClient ??
+        (deps.createStatementClient ?? ((token: string) => new MonobankClient(token)))(tokens!.monoToken),
+      budgetProvider:
+        deps.budgetProvider ??
+        (deps.createBudgetProvider ?? ((token: string) => new LunchMoneyV1Client(token)))(
+          tokens!.lunchMoneyToken
+        ),
       logWriter,
       windows,
       dryRun: options.dryRun,
       rateLimiter:
-        deps.rateLimiter ?? (deps.statementClient ? undefined : { rateLimiter: new MonoRateLimiter() })
+        deps.rateLimiter ?? (deps.statementClient ? undefined : { rateLimiter: new MonoRateLimiter() }),
+      onStarted: () =>
+        notifyBackfillEvent({
+          config: loaded.config.notifications,
+          event: {
+            type: "sync-started",
+            sourceCommand: "backfill",
+            quiet: Boolean(options.quiet),
+            summary: "Backfill started.",
+            logPath: paths.syncLogPath,
+            occurredAt: new Date()
+          },
+          adapter: notificationAdapter,
+          logWriter
+        })
     });
 
     if (result.hadFailure) {
@@ -140,7 +181,7 @@ async function notifyBackfillEvent(input: {
   });
 }
 
-export function createBackfillCommand(): Command {
+export function createBackfillCommand(deps: BackfillDeps = {}): Command {
   return new Command("backfill")
     .description("Import historical transactions for a date range")
     .option("--config <path>", "explicit config path")
@@ -148,5 +189,5 @@ export function createBackfillCommand(): Command {
     .option("--to <date>", "end date in YYYY-MM-DD")
     .option("--quiet", "suppress non-error output")
     .option("--dry-run", "preview backfill without importing")
-    .action((options: BackfillOptions) => runBackfillCommand(options));
+    .action((options: BackfillOptions) => runBackfillCommand(options, deps));
 }

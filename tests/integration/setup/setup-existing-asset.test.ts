@@ -8,7 +8,7 @@ import { fakeBudgetProvider, monoClientInfo } from "../../fixtures/providers.js"
 describe("setup with existing Lunch Money asset", () => {
   it("maps a tracked Monobank source to an existing asset without saving tokens", async () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "mono-setup-"));
-    const answers = ["", "2026-05-01", "no", "yes", "1", ""];
+    const answers = ["no", "", "01.05.2026", "no", "yes", "1", ""];
     const provider = fakeBudgetProvider();
 
     await runSetupCommand(

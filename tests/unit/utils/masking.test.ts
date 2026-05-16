@@ -30,4 +30,15 @@ describe("masking utilities", () => {
       nested: { display: "Card 4444...1111" }
     });
   });
+
+  it("redacts credential-like values in errors and diagnostics", () => {
+    const sanitized = sanitizeText(
+      "Credential failed for mono-secure-token-1234567890 and lunch-secure-token-0987654321"
+    );
+
+    expect(sanitized).not.toContain("mono-secure-token-1234567890");
+    expect(sanitized).not.toContain("lunch-secure-token-0987654321");
+    expect(sanitized).toContain("mono-s...7890");
+    expect(sanitized).toContain("lunch-...4321");
+  });
 });

@@ -12,21 +12,29 @@ describe("notification message builder", () => {
     );
 
     expect(message.severity).toBe("error");
-    expect(message.title).toContain("sync failed");
+    expect(message.title).toContain("Sync failed");
+    expect(message.body).toContain("Sync failed before it could finish.");
     expect(message.body).not.toContain("secret");
     expect(message.body).not.toContain("4444333322221111");
     expect(message.body).toContain("4444...1111");
+    expect(message.body).not.toContain("Logs:");
+    expect(message.body).not.toContain("error.log");
   });
 
-  it("maps partial failure, lock-held, and success events", () => {
-    expect(
-      buildNotificationMessage(notificationEvent({ type: "sync-partial-failure" })).severity
-    ).toBe("warning");
-    expect(buildNotificationMessage(notificationEvent({ type: "lock-held" })).severity).toBe(
-      "warning"
-    );
-    expect(buildNotificationMessage(notificationEvent({ type: "sync-success" })).severity).toBe(
-      "info"
-    );
+  it("maps started, partial failure, lock-held, and success events", () => {
+    const started = buildNotificationMessage(notificationEvent({ type: "sync-started" }));
+    const partial = buildNotificationMessage(notificationEvent({ type: "sync-partial-failure" }));
+    const locked = buildNotificationMessage(notificationEvent({ type: "lock-held" }));
+    const success = buildNotificationMessage(notificationEvent({ type: "sync-success" }));
+
+    expect(started.severity).toBe("info");
+    expect(started.title).toContain("Sync started");
+    expect(started.body).toContain("Sync started.");
+    expect(partial.severity).toBe("warning");
+    expect(partial.body).toContain("Sync finished, but one or more accounts failed.");
+    expect(locked.severity).toBe("warning");
+    expect(locked.body).toContain("another run is already active");
+    expect(success.severity).toBe("info");
+    expect(success.body).toContain("Sync finished successfully.");
   });
 });

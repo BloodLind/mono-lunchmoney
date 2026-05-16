@@ -57,6 +57,7 @@ describe("global package install", () => {
 
       expect(help.status, help.stderr || help.stdout).toBe(0);
       expect(help.stdout).toContain("mono-lunchmoney");
+      expect(help.stdout).toContain("credentials");
       expect(help.stdout).toContain("help [topic]");
     } finally {
       rmSync(prefix, { recursive: true, force: true });

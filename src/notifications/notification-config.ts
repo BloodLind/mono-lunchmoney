@@ -2,6 +2,7 @@ import type { NotificationConfig } from "../config/config.model.js";
 
 export const DEFAULT_NOTIFICATION_CONFIG: NotificationConfig = {
   enabled: false,
+  notifyOnStart: true,
   notifyOnSuccess: false,
   notifyOnFailure: true,
   notifyOnPartialFailure: true,
@@ -22,6 +23,7 @@ export function enableNotifications(options: {
   return {
     ...DEFAULT_NOTIFICATION_CONFIG,
     enabled: true,
+    notifyOnStart: !options.failureOnly,
     notifyOnSuccess: options.failureOnly ? false : Boolean(options.success)
   };
 }
@@ -43,6 +45,8 @@ export function shouldNotify(
   }
 
   switch (eventType) {
+    case "sync-started":
+      return notifications.notifyOnStart;
     case "sync-success":
       return notifications.notifyOnSuccess;
     case "sync-failure":

@@ -1,4 +1,8 @@
-import type { AppConfig, AccountMapping } from "../../src/config/config.model.js";
+import type {
+  AppConfig,
+  AccountMapping,
+  IgnoredMonobankAccount
+} from "../../src/config/config.model.js";
 
 export function accountMapping(overrides: Partial<AccountMapping> = {}): AccountMapping {
   return {
@@ -16,14 +20,31 @@ export function accountMapping(overrides: Partial<AccountMapping> = {}): Account
   };
 }
 
+export function ignoredMonobankAccount(
+  overrides: Partial<IgnoredMonobankAccount> = {}
+): IgnoredMonobankAccount {
+  return {
+    enabled: true,
+    monoAccountId: "mono-ignored-account",
+    monoDisplayName: "Mono White UAH ****2222",
+    monoType: "white",
+    monoCurrencyCode: 980,
+    currency: "uah",
+    maskedPan: "4444******2222",
+    ...overrides
+  };
+}
+
 export function appConfig(overrides: Partial<AppConfig> = {}): AppConfig {
   return {
     schemaVersion: 1,
     lunchMoneyApiVersion: "v1",
     lookbackDays: 31,
     defaultTag: "monobank-sync",
+    ignoredMonobankAccounts: [],
     notifications: {
       enabled: false,
+      notifyOnStart: true,
       notifyOnSuccess: false,
       notifyOnFailure: true,
       notifyOnPartialFailure: true,

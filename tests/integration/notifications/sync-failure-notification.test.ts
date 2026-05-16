@@ -29,6 +29,7 @@ describe("sync failure notification", () => {
     ).rejects.toThrow(/enabled account/);
 
     expect(adapter.messages).toHaveLength(1);
-    expect(adapter.messages[0].title).toContain("sync failed");
+    expect(adapter.messages[0].title).toContain("Sync failed");
+    expect(adapter.messages[0].body).not.toContain("Logs:");
   });
 });

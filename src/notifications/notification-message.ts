@@ -2,11 +2,11 @@ import { sanitizeText } from "../utils/masking.js";
 import type { NotificationEvent, NotificationMessage } from "./notification-types.js";
 
 export function buildNotificationMessage(event: NotificationEvent): NotificationMessage {
-  const subject = event.sourceCommand === "backfill" ? "backfill" : "sync";
+  const subject = event.sourceCommand === "backfill" ? "Backfill" : "Sync";
   const severity = severityForEvent(event.type);
-  const title = `Mono Lunch Money ${subject} ${titleSuffix(event.type)}`;
-  const bodyParts = [event.summary, event.details, event.logPath ? `Logs: ${event.logPath}` : undefined]
-    .filter(Boolean)
+  const title = `Mono Lunch Money: ${subject} ${titleSuffix(event.type)}`;
+  const bodyParts = [bodyIntro(event), event.details]
+    .filter((part): part is string => Boolean(part))
     .map((part) => sanitizeText(part));
 
   return {
@@ -16,8 +16,27 @@ export function buildNotificationMessage(event: NotificationEvent): Notification
   };
 }
 
+function bodyIntro(event: NotificationEvent): string {
+  const subject = event.sourceCommand === "backfill" ? "Backfill" : "Sync";
+  switch (event.type) {
+    case "sync-started":
+      return `${subject} started.`;
+    case "sync-success":
+      return `${subject} finished successfully.`;
+    case "sync-partial-failure":
+      return `${subject} finished, but one or more accounts failed.`;
+    case "lock-held":
+      return `${subject} was skipped because another run is already active.`;
+    case "sync-failure":
+      return `${subject} failed before it could finish.`;
+    case "notification-failure":
+      return "Windows notification delivery failed.";
+  }
+}
+
 function severityForEvent(type: NotificationEvent["type"]): NotificationMessage["severity"] {
   switch (type) {
+    case "sync-started":
     case "sync-success":
       return "info";
     case "sync-partial-failure":
@@ -31,6 +50,8 @@ function severityForEvent(type: NotificationEvent["type"]): NotificationMessage[
 
 function titleSuffix(type: NotificationEvent["type"]): string {
   switch (type) {
+    case "sync-started":
+      return "started";
     case "sync-success":
       return "completed";
     case "sync-partial-failure":
@@ -40,6 +61,6 @@ function titleSuffix(type: NotificationEvent["type"]): string {
     case "sync-failure":
       return "failed";
     case "notification-failure":
-      return "notification failed";
+      return "notification delivery failed";
   }
 }

@@ -8,7 +8,7 @@ import { fakeBudgetProvider, monoClientInfo } from "../../fixtures/providers.js"
 describe("setup with Lunch Money asset creation", () => {
   it("creates an asset and maps the Monobank source to the returned id", async () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "mono-setup-create-"));
-    const answers = ["", "", "no", "yes", "1", "New Monobank", "", ""];
+    const answers = ["no", "", "", "no", "yes", "1", "New Monobank", "", ""];
     const provider = fakeBudgetProvider([]);
 
     await runSetupCommand(

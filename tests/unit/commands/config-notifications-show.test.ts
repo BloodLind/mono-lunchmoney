@@ -9,6 +9,7 @@ describe("config show notification sanitization", () => {
         appConfig({
           notifications: {
             enabled: true,
+            notifyOnStart: true,
             notifyOnSuccess: true,
             notifyOnFailure: true,
             notifyOnPartialFailure: true,
@@ -19,6 +20,7 @@ describe("config show notification sanitization", () => {
     );
 
     expect(summary).toContain("notifications");
+    expect(summary).toContain("notifyOnStart");
     expect(summary).toContain("notifyOnSuccess");
     expect(summary).not.toMatch(/MONO_TOKEN|LUNCHMONEY_TOKEN|secret/i);
   });

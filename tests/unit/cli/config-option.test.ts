@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { stripAnsi } from "../../../src/cli/color.js";
 import { runConfigShow } from "../../../src/commands/config.command.js";
 
 describe("explicit config path option", () => {
@@ -12,7 +13,8 @@ describe("explicit config path option", () => {
       }
     );
 
-    expect(output).toContain("D:\\custom\\config.json");
-    expect(output).toContain("Config exists: no");
+    const plain = stripAnsi(output);
+    expect(plain).toContain("D:\\custom\\config.json");
+    expect(plain).toMatch(/Config exists:\s+no/);
   });
 });

@@ -11,7 +11,7 @@ describe("setup to sync notification flow", () => {
   it("uses setup notification settings for a later quiet sync failure", async () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "mono-setup-sync-notify-"));
     const configPath = path.join(root, "config.json");
-    const answers = ["", "", "yes", "no", "yes", "1", ""];
+    const answers = ["no", "", "", "yes", "no", "yes", "1", ""];
 
     await runSetupCommand(
       { config: configPath },
@@ -44,9 +44,10 @@ describe("setup to sync notification flow", () => {
       )
     ).rejects.toThrow(/account failures/);
 
-    expect(adapter.messages).toHaveLength(1);
-    expect(adapter.messages[0].title).toContain("completed with failures");
-    expect(adapter.messages[0].body).not.toContain("secret");
-    expect(adapter.messages[0].body).toContain("4444...1111");
+    expect(adapter.messages).toHaveLength(2);
+    expect(adapter.messages[0].title).toContain("Sync started");
+    expect(adapter.messages[1].title).toContain("completed with failures");
+    expect(adapter.messages[1].body).not.toContain("secret");
+    expect(adapter.messages[1].body).toContain("4444...1111");
   });
 });

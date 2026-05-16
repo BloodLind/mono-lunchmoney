@@ -14,6 +14,7 @@ export type NotificationDeliveryResult = {
 };
 
 export type NotificationEventType =
+  | "sync-started"
   | "sync-success"
   | "sync-failure"
   | "sync-partial-failure"

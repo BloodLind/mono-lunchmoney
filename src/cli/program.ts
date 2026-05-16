@@ -8,7 +8,6 @@ export function createProgram(): Command {
   return new Command()
     .name(APP_NAME)
     .description("Local Monobank to Lunch Money bridge")
-    .option("--config <path>", "explicit config path for commands that support config")
     .version(APP_VERSION)
     .addHelpCommand(false)
     .configureOutput({

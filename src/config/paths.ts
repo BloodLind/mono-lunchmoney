@@ -1,6 +1,7 @@
 import os from "node:os";
 import path from "node:path";
 import { APP_DIRECTORY_NAME } from "../cli/command-registry.js";
+import { getCredentialDirectory, getCredentialRecordPath } from "./runtime-files.js";
 
 export type RuntimePathOptions = {
   configPath?: string;
@@ -13,6 +14,11 @@ export type RuntimePaths = {
   syncLogPath: string;
   errorLogPath: string;
   lockPath: string;
+  credentialDirectory: string;
+  credentialRecordPaths: {
+    monobank: string;
+    lunchmoney: string;
+  };
 };
 
 export function getDefaultAppDataDirectory(env: NodeJS.ProcessEnv = process.env): string {
@@ -34,6 +40,7 @@ export function getDefaultAppDataDirectory(env: NodeJS.ProcessEnv = process.env)
 export function resolveRuntimePaths(options: RuntimePathOptions = {}): RuntimePaths {
   const env = options.env ?? process.env;
   const appDataDirectory = getDefaultAppDataDirectory(env);
+  const credentialDirectory = getCredentialDirectory(appDataDirectory);
 
   return {
     appDataDirectory,
@@ -42,6 +49,11 @@ export function resolveRuntimePaths(options: RuntimePathOptions = {}): RuntimePa
       : path.join(appDataDirectory, "config.json"),
     syncLogPath: path.join(appDataDirectory, "sync.log"),
     errorLogPath: path.join(appDataDirectory, "error.log"),
-    lockPath: path.join(appDataDirectory, "sync.lock")
+    lockPath: path.join(appDataDirectory, "sync.lock"),
+    credentialDirectory,
+    credentialRecordPaths: {
+      monobank: getCredentialRecordPath(appDataDirectory, "monobank"),
+      lunchmoney: getCredentialRecordPath(appDataDirectory, "lunchmoney")
+    }
   };
 }

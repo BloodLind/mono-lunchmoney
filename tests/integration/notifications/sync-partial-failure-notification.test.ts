@@ -46,8 +46,9 @@ describe("sync partial failure notification", () => {
       )
     ).rejects.toThrow(/account failures/);
 
-    expect(adapter.messages).toHaveLength(1);
-    expect(adapter.messages[0].title).toContain("completed with failures");
-    expect(adapter.messages[0].body).toContain("Bad failed");
+    expect(adapter.messages).toHaveLength(2);
+    expect(adapter.messages[0].title).toContain("Sync started");
+    expect(adapter.messages[1].title).toContain("completed with failures");
+    expect(adapter.messages[1].body).toContain("Bad failed");
   });
 });

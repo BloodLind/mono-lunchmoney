@@ -8,7 +8,7 @@ import { fakeBudgetProvider, fakeStatementClient, monoStatementItem } from "../.
 import { memoryNotificationAdapter, memoryNotificationLogger } from "../../fixtures/notifications.js";
 
 describe("failure-only success notification behavior", () => {
-  it("does not notify on successful sync when success preference is disabled", async () => {
+  it("still notifies when sync starts but does not notify on success when success preference is disabled", async () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "mono-sync-success-disabled-"));
     const configPath = path.join(root, "config.json");
     writeFileSync(configPath, JSON.stringify(appConfig({ notifications: { enabled: true } })), "utf8");
@@ -25,6 +25,7 @@ describe("failure-only success notification behavior", () => {
       }
     );
 
-    expect(adapter.messages).toHaveLength(0);
+    expect(adapter.messages).toHaveLength(1);
+    expect(adapter.messages[0].title).toContain("Sync started");
   });
 });

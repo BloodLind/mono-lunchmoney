@@ -1,5 +1,11 @@
 import { existsSync, readFileSync } from "node:fs";
-import { parseAppConfig, type AppConfig } from "./config.model.js";
+import { createCommandUi } from "../cli/ui.js";
+import {
+  getEnabledIgnoredMonobankAccounts,
+  getSyncableAccountMappings,
+  parseAppConfig,
+  type AppConfig
+} from "./config.model.js";
 import type { RuntimePaths } from "./paths.js";
 import { maskLongIdentifier, sanitizeObject } from "../utils/masking.js";
 
@@ -29,6 +35,9 @@ export function loadConfig(configPath: string): LoadedConfig {
 }
 
 export function sanitizedConfigSummary(config: AppConfig): unknown {
+  const enabledIgnored = getEnabledIgnoredMonobankAccounts(config);
+  const syncableAccounts = getSyncableAccountMappings(config);
+  const syncableIds = new Set(syncableAccounts.map((account) => account.monoAccountId));
   return sanitizeObject({
     schemaVersion: config.schemaVersion,
     lunchMoneyApiVersion: config.lunchMoneyApiVersion,
@@ -37,6 +46,23 @@ export function sanitizedConfigSummary(config: AppConfig): unknown {
     defaultTag: config.defaultTag,
     scheduler: config.scheduler,
     notifications: config.notifications,
+    ignoredTransferSummary: {
+      ignoredSourceCount: enabledIgnored.length,
+      syncableMappingCount: syncableAccounts.length,
+      skippedMappingCount: config.accounts.filter(
+        (account) => account.enabled && !syncableIds.has(account.monoAccountId)
+      ).length
+    },
+    ignoredMonobankAccounts: config.ignoredMonobankAccounts.map((account) => ({
+      enabled: account.enabled,
+      monoDisplayName: account.monoDisplayName,
+      monoType: account.monoType,
+      monoCurrencyCode: account.monoCurrencyCode,
+      currency: account.currency,
+      monoAccountId: maskLongIdentifier(account.monoAccountId),
+      maskedPan: account.maskedPan,
+      hasIbanMatcher: Boolean(account.ibanSha256)
+    })),
     accounts: config.accounts.map((account) => ({
       enabled: account.enabled,
       monoDisplayName: account.monoDisplayName,
@@ -51,22 +77,45 @@ export function sanitizedConfigSummary(config: AppConfig): unknown {
   });
 }
 
-export function formatConfigShow(paths: RuntimePaths, loaded: LoadedConfig): string {
+export function formatConfigShow(
+  paths: RuntimePaths,
+  loaded: LoadedConfig,
+  env: NodeJS.ProcessEnv = process.env
+): string {
+  const ui = createCommandUi(env);
   const lines = [
-    "Mono Lunch Money configuration",
-    `Config exists: ${loaded.exists ? "yes" : "no"}`,
-    `Config path: ${paths.configPath}`,
-    `Sync log path: ${paths.syncLogPath}`,
-    `Error log path: ${paths.errorLogPath}`,
-    `Lock path: ${paths.lockPath}`
+    ui.title("Mono Lunch Money Configuration"),
+    "",
+    ui.section("Runtime Files"),
+    ...ui.keyValues([
+      { label: "Config exists", value: loaded.exists ? "yes" : "no", tone: loaded.exists ? "success" : "warning" },
+      { label: "Config path", value: paths.configPath },
+      { label: "Sync log path", value: paths.syncLogPath },
+      { label: "Error log path", value: paths.errorLogPath },
+      { label: "Lock path", value: paths.lockPath },
+      { label: "Credential directory", value: paths.credentialDirectory },
+      {
+        label: "Monobank credential",
+        value: existsSync(paths.credentialRecordPaths.monobank) ? "saved" : "not saved",
+        tone: existsSync(paths.credentialRecordPaths.monobank) ? "success" : "muted"
+      },
+      {
+        label: "Lunch Money credential",
+        value: existsSync(paths.credentialRecordPaths.lunchmoney) ? "saved" : "not saved",
+        tone: existsSync(paths.credentialRecordPaths.lunchmoney) ? "success" : "muted"
+      }
+    ])
   ];
 
   if (!loaded.exists) {
-    lines.push("Next step: run mono-lunchmoney setup to create config.");
+    lines.push("");
+    lines.push(ui.section("Next Step"));
+    lines.push(ui.bullet(`Run ${ui.command("mono-lunchmoney setup")} to create config.`));
     return `${lines.join("\n")}\n`;
   }
 
-  lines.push("Sanitized config:");
+  lines.push("");
+  lines.push(ui.section("Sanitized Config"));
   lines.push(JSON.stringify(sanitizedConfigSummary(loaded.config), null, 2));
   return `${lines.join("\n")}\n`;
 }
