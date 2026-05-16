@@ -92,7 +92,7 @@ Expected result:
 - The command returns non-zero.
 - The error log contains a readable sanitized failure.
 - Scheduler status can surface a non-success last result after scheduled runs.
-- No active desktop/email/push notification is expected in this feature.
+- No desktop/email/push notification is expected for this missing-config check.
 
 ## Package Validation
 

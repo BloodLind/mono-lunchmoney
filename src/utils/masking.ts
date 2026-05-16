@@ -29,14 +29,25 @@ export function sanitizeText(value: unknown): string {
   text = text.replace(/\b(MONO_TOKEN|LUNCHMONEY_TOKEN)=("[^"]+"|'[^']+'|\S+)/gi, "$1=[REDACTED]");
   text = text.replace(/\b(Bearer\s+)([A-Za-z0-9._~+/-]+=*)/gi, "$1[REDACTED]");
   text = text.replace(/\b(X-Token:\s*)([A-Za-z0-9._~+/-]+=*)/gi, "$1[REDACTED]");
+  text = text.replace(
+    /\b(token|secret|password|authorization)\s+("[^"]+"|'[^']+'|\S+)/gi,
+    "$1 [REDACTED]"
+  );
   text = text.replace(TOKEN_KEY_PATTERN, (match) => match);
 
   text = text.replace(/\b([A-Z]{2}\d{2}[A-Z0-9]{8,30})\b/g, (match) => {
-    return `${match.slice(0, 4)}...${match.slice(-4)}`;
+    return maskIban(match);
   });
 
   text = text.replace(/\b(\d{12,19})\b/g, (match) => {
-    return `${match.slice(0, 4)}...${match.slice(-4)}`;
+    return maskPan(match);
+  });
+
+  text = text.replace(/\b([a-z0-9_-]{20,})\b/gi, (match) => {
+    if (/^[a-z0-9._~+/-]+=*$/i.test(match)) {
+      return maskLongIdentifier(match);
+    }
+    return match;
   });
 
   return text;
@@ -54,4 +65,26 @@ export function sanitizeObject<T>(value: T): T {
       return item;
     })
   ) as T;
+}
+
+export function maskPan(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  if (digits.length < 8) {
+    return value;
+  }
+  return `${digits.slice(0, 4)}...${digits.slice(-4)}`;
+}
+
+export function maskIban(value: string): string {
+  if (value.length <= 8) {
+    return value;
+  }
+  return `${value.slice(0, 4)}...${value.slice(-4)}`;
+}
+
+export function maskLongIdentifier(value: string): string {
+  if (value.length <= 12) {
+    return value;
+  }
+  return `${value.slice(0, 6)}...${value.slice(-4)}`;
 }

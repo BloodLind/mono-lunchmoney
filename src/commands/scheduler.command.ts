@@ -1,16 +1,20 @@
 import { Command } from "commander";
 import { DEFAULT_DAILY_AT, DEFAULT_TASK_NAME } from "../cli/command-registry.js";
 import { schedulerInstallOptionsSchema } from "../config/config.model.js";
+import { loadConfig } from "../config/config.loader.js";
 import { resolveRuntimePaths } from "../config/paths.js";
+import { writeConfig } from "../config/config.writer.js";
 import {
   getScheduledTaskStatus,
   installScheduledTask,
-  uninstallScheduledTask
+  uninstallScheduledTask,
+  type PowerShellExecutor
 } from "../scheduler/windows-task-scheduler.js";
 
 export type SchedulerDeps = {
   env?: NodeJS.ProcessEnv;
   stdout?: Pick<NodeJS.WriteStream, "write">;
+  executor?: PowerShellExecutor;
 };
 
 function writeLine(deps: SchedulerDeps, text: string): void {
@@ -32,8 +36,21 @@ export function createSchedulerCommand(deps: SchedulerDeps = {}): Command {
       const scheduled = await installScheduledTask({
         dailyAt: parsed.dailyAt,
         taskName: parsed.taskName,
-        configPath: paths.configPath
+        configPath: paths.configPath,
+        executor: deps.executor
       });
+      const loaded = loadConfig(paths.configPath);
+      if (loaded.exists) {
+        await writeConfig(paths.configPath, {
+          ...loaded.config,
+          scheduler: {
+            enabled: true,
+            type: "windows-task-scheduler",
+            dailyAt: parsed.dailyAt,
+            taskName: parsed.taskName
+          }
+        });
+      }
       writeLine(deps, `Task installed: ${parsed.taskName}`);
       writeLine(deps, `Command: ${scheduled.commandLine}`);
     });
@@ -43,7 +60,7 @@ export function createSchedulerCommand(deps: SchedulerDeps = {}): Command {
     .description("Show background sync task status")
     .option("--task-name <name>", "Windows task name", DEFAULT_TASK_NAME)
     .action(async (options: { taskName: string }) => {
-      const status = await getScheduledTaskStatus(options.taskName);
+      const status = await getScheduledTaskStatus(options.taskName, deps.executor);
       writeLine(deps, `Task exists: ${status.exists ? "yes" : "no"}`);
       writeLine(deps, `Task name: ${status.taskName}`);
       if (status.nextRunTime) writeLine(deps, `Next run time: ${status.nextRunTime}`);
@@ -59,7 +76,7 @@ export function createSchedulerCommand(deps: SchedulerDeps = {}): Command {
     .description("Remove background sync task")
     .option("--task-name <name>", "Windows task name", DEFAULT_TASK_NAME)
     .action(async (options: { taskName: string }) => {
-      await uninstallScheduledTask(options.taskName);
+      await uninstallScheduledTask(options.taskName, deps.executor);
       writeLine(deps, `Task uninstalled: ${options.taskName}`);
     });
 

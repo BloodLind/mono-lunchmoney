@@ -6,33 +6,22 @@ import {
 } from "../../../src/scheduler/windows-task-scheduler.js";
 
 describe("Windows Task Scheduler wrapper with mocked executor", () => {
-  it("builds install script and invokes executor on Windows", async () => {
+  it("builds install script and invokes executor with a fake executor", async () => {
     const scripts: string[] = [];
 
-    if (process.platform === "win32") {
-      const scheduled = await installScheduledTask({
-        dailyAt: "20:00",
-        taskName: "MonoLunchMoneySync",
-        configPath: "C:\\config.json",
-        executor: async (script) => {
-          scripts.push(script);
-          return "";
-        }
-      });
+    const scheduled = await installScheduledTask({
+      dailyAt: "20:00",
+      taskName: "MonoLunchMoneySync",
+      configPath: "C:\\config.json",
+      executor: async (script) => {
+        scripts.push(script);
+        return "";
+      }
+    });
 
-      expect(scheduled.commandLine).toContain("sync");
-      expect(scripts[0]).toContain("Register-ScheduledTask");
-      expect(scripts[0]).not.toMatch(/token/i);
-    } else {
-      await expect(
-        installScheduledTask({
-          dailyAt: "20:00",
-          taskName: "MonoLunchMoneySync",
-          configPath: "config.json",
-          executor: async () => ""
-        })
-      ).rejects.toThrow(/Windows/);
-    }
+    expect(scheduled.commandLine).toContain("sync");
+    expect(scripts[0]).toContain("Register-ScheduledTask");
+    expect(scripts[0]).not.toMatch(/token/i);
   });
 
   it("parses status output from mocked executor", async () => {
@@ -45,22 +34,18 @@ describe("Windows Task Scheduler wrapper with mocked executor", () => {
       })
     );
 
-    expect(status.exists).toBe(process.platform === "win32");
-    if (process.platform === "win32") {
-      expect(status.registeredCommand).toContain("sync");
-    }
+    expect(status.exists).toBe(true);
+    expect(status.registeredCommand).toContain("sync");
   });
 
-  it("invokes uninstall script through mocked executor on Windows", async () => {
+  it("invokes uninstall script through mocked executor", async () => {
     const scripts: string[] = [];
 
-    if (process.platform === "win32") {
-      await uninstallScheduledTask("MonoLunchMoneySync", async (script) => {
-        scripts.push(script);
-        return "";
-      });
+    await uninstallScheduledTask("MonoLunchMoneySync", async (script) => {
+      scripts.push(script);
+      return "";
+    });
 
-      expect(scripts[0]).toContain("Unregister-ScheduledTask");
-    }
+    expect(scripts[0]).toContain("Unregister-ScheduledTask");
   });
 });

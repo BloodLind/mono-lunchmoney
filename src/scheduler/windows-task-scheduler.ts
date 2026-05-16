@@ -41,7 +41,7 @@ export type SchedulerOptions = {
 export type PowerShellExecutor = (script: string) => Promise<string>;
 
 function quoteArg(value: string): string {
-  if (!/[\s"]/.test(value)) {
+  if (!/[\s"]|^[A-Za-z]:\\/.test(value)) {
     return value;
   }
   return `"${value.replace(/"/g, '\\"')}"`;
@@ -114,7 +114,9 @@ function assertWindows(): void {
 }
 
 export async function installScheduledTask(options: SchedulerOptions): Promise<ScheduledCommand> {
-  assertWindows();
+  if (!options.executor) {
+    assertWindows();
+  }
   const dailyAt = hhmmSchema.parse(options.dailyAt ?? DEFAULT_DAILY_AT);
   const taskName = options.taskName ?? DEFAULT_TASK_NAME;
   const scheduled = buildScheduledSyncCommand({ configPath: options.configPath });
@@ -139,7 +141,7 @@ export async function getScheduledTaskStatus(
   taskName = DEFAULT_TASK_NAME,
   executor: PowerShellExecutor = defaultPowerShellExecutor
 ): Promise<SchedulerStatus> {
-  if (process.platform !== "win32") {
+  if (process.platform !== "win32" && executor === defaultPowerShellExecutor) {
     return { exists: false, taskName };
   }
 
@@ -161,7 +163,9 @@ export async function uninstallScheduledTask(
   taskName = DEFAULT_TASK_NAME,
   executor: PowerShellExecutor = defaultPowerShellExecutor
 ): Promise<void> {
-  assertWindows();
+  if (executor === defaultPowerShellExecutor) {
+    assertWindows();
+  }
   const script = [
     `$Task = Get-ScheduledTask -TaskName ${psQuote(taskName)} -ErrorAction SilentlyContinue`,
     "if ($null -ne $Task) { Unregister-ScheduledTask -TaskName $Task.TaskName -Confirm:$false }"

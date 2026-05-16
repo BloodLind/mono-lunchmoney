@@ -1,6 +1,11 @@
 import { appendTextCreatingParent } from "../config/runtime-files.js";
 import { sanitizeText } from "../utils/masking.js";
 
+export type LogWriter = {
+  success(line: string): Promise<void>;
+  error(line: string): Promise<void>;
+};
+
 export type FailureRecord = {
   timestamp?: Date;
   source: string;
@@ -24,9 +29,28 @@ export function formatFailureRecord(record: FailureRecord): string {
   )}\n`;
 }
 
+export function formatSyncRecord(message: string, timestamp = new Date()): string {
+  return `[${formatLocalTimestamp(timestamp)}] ${sanitizeText(message)}\n`;
+}
+
 export async function writeFailureRecord(
   errorLogPath: string,
   record: FailureRecord
 ): Promise<void> {
   await appendTextCreatingParent(errorLogPath, formatFailureRecord(record));
+}
+
+export async function writeSuccessRecord(syncLogPath: string, message: string): Promise<void> {
+  await appendTextCreatingParent(syncLogPath, formatSyncRecord(message));
+}
+
+export function createFileLogWriter(syncLogPath: string, errorLogPath: string): LogWriter {
+  return {
+    async success(line: string) {
+      await appendTextCreatingParent(syncLogPath, sanitizeText(line));
+    },
+    async error(line: string) {
+      await appendTextCreatingParent(errorLogPath, sanitizeText(line));
+    }
+  };
 }

@@ -13,4 +13,15 @@ describe("README command examples", () => {
   it("documents token safety for scheduler usage", () => {
     expect(readme).toMatch(/API tokens are never included in the scheduled command/i);
   });
+
+  it("documents notification commands", () => {
+    for (const command of [
+      "config notifications enable",
+      "config notifications enable --success",
+      "config notifications disable",
+      "config notifications status"
+    ]) {
+      expect(readme).toContain(`mono-lunchmoney ${command}`);
+    }
+  });
 });

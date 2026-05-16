@@ -38,11 +38,23 @@ Do not pass either token as a command-line option.
 mono-lunchmoney setup
 ```
 
+Expected output shape:
+
+```text
+Found Monobank accounts:
+[1] BLACK UAH 4444******1111 | balance 25430.20 UAH
+Config saved: C:\Users\<you>\AppData\Roaming\mono-lunchmoney\config.json
+Tracked mappings:
+- BLACK UAH 4444...1111 -> Monobank Black UAH (mono:m...nt-1)
+```
+
 Expected result:
 
 - Monobank sources are displayed with masked identifiers.
 - Each tracked source is mapped to an existing or newly created Lunch Money
   manual account.
+- An optional baseline date can be saved as `baselineDate`; sync and backfill
+  will not fetch Monobank statements before this `YYYY-MM-DD` date.
 - `%APPDATA%\mono-lunchmoney\config.json` is written without API tokens.
 - The final summary contains only sanitized identifiers.
 
@@ -66,6 +78,15 @@ Expected result:
 - Re-running sync against the same transactions creates no duplicates.
 - Logs are written to `%APPDATA%\mono-lunchmoney\sync.log` and
   `%APPDATA%\mono-lunchmoney\error.log`.
+
+Example sync log:
+
+```text
+[2026-05-15 20:00:01] Sync started
+[2026-05-15 20:00:03] Account Monobank Black UAH: fetched 48 transactions
+[2026-05-15 20:00:05] Account Monobank Black UAH: sent 48 transactions to Lunch Money
+[2026-05-15 20:00:06] Sync finished successfully
+```
 
 ## Backfill
 
@@ -137,3 +158,13 @@ Required behavioral checks:
 - Mocked integration tests cover Monobank 500-item paging.
 - Mocked integration tests cover Lunch Money chunking above 500 transactions.
 - Scheduler tests prove registered commands contain no tokens.
+
+## Implementation Validation Notes
+
+- 2026-05-16 validation from the repository root passed:
+  `npm run build`, `npm test`, and `npm run lint`, with `NODE_OPTIONS` cleared
+  because the local shell had a stale VS Code debug preload.
+- The local npm PowerShell shim printed an access-denied warning while still
+  returning successful exit codes for passing build/lint/test commands.
+- Config writes and sync orchestration were reviewed to confirm they do not
+  persist imported transaction progress.

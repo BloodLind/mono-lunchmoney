@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { parseAppConfig, type AppConfig } from "./config.model.js";
 import type { RuntimePaths } from "./paths.js";
-import { sanitizeObject } from "../utils/masking.js";
+import { maskLongIdentifier, sanitizeObject } from "../utils/masking.js";
 
 export type LoadedConfig =
   | {
@@ -33,8 +33,10 @@ export function sanitizedConfigSummary(config: AppConfig): unknown {
     schemaVersion: config.schemaVersion,
     lunchMoneyApiVersion: config.lunchMoneyApiVersion,
     lookbackDays: config.lookbackDays,
+    baselineDate: config.baselineDate,
     defaultTag: config.defaultTag,
     scheduler: config.scheduler,
+    notifications: config.notifications,
     accounts: config.accounts.map((account) => ({
       enabled: account.enabled,
       monoDisplayName: account.monoDisplayName,
@@ -44,7 +46,7 @@ export function sanitizedConfigSummary(config: AppConfig): unknown {
       lunchMoneyAssetId: account.lunchMoneyAssetId,
       lunchMoneyAccountName: account.lunchMoneyAccountName,
       tag: account.tag,
-      externalIdPrefix: account.externalIdPrefix
+      externalIdPrefix: maskLongIdentifier(account.externalIdPrefix)
     }))
   });
 }

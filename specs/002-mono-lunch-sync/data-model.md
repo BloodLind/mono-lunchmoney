@@ -9,6 +9,8 @@ Represents saved user settings. Persisted in `config.json`.
 - `schemaVersion: number` - positive integer, initially `1`.
 - `lunchMoneyApiVersion: "v1"` - first implementation targets v1 only.
 - `lookbackDays: number` - integer from 1 to 31, default `31`.
+- `baselineDate?: string` - optional `YYYY-MM-DD` lower bound; statement fetches
+  are clamped so no transactions before this date are requested.
 - `defaultTag: string` - non-empty, default `monobank-sync`.
 - `scheduler?: SchedulerConfig` - optional scheduled task settings.
 - `accounts: AccountMapping[]` - tracked account mappings.
@@ -19,6 +21,8 @@ Represents saved user settings. Persisted in `config.json`.
 - Must contain at least one enabled `AccountMapping` for `sync` or `backfill`.
 - Unknown keys may be preserved for forward compatibility but must not be used as
   imported transaction progress.
+- `baselineDate` is a user-selected static import boundary, not a cursor or
+  last-sync timestamp.
 
 ## SchedulerConfig
 
