@@ -25,10 +25,33 @@ The app is stateless for transaction progress. It stores config, mappings, sched
 
 ## Install
 
+Install the published CLI globally from npm. This is the normal installation path:
+
+```powershell
+npm install -g mono-lunchmoney
+```
+
+Then confirm the command is available:
+
+```powershell
+mono-lunchmoney help
+```
+
+Install directly from a local source checkout:
+
 ```powershell
 npm install
 npm run build
 npm install -g .
+```
+
+Install from a locally built npm package tarball:
+
+```powershell
+npm install
+npm run build
+$package = npm pack --silent
+npm install -g ".\$package"
 ```
 
 ## First Run
