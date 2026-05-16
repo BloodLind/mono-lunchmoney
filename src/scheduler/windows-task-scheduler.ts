@@ -2,11 +2,11 @@ import { execFile } from "node:child_process";
 import path from "node:path";
 import { promisify } from "node:util";
 import {
+  CliError,
   DEFAULT_DAILY_AT,
   DEFAULT_TASK_NAME,
   EXIT_CODES
 } from "../cli/command-registry.js";
-import { CliError } from "../cli/errors.js";
 import { hhmmSchema } from "../config/config.model.js";
 import { getSchedulerLauncherPath, writeTextCreatingParent } from "../config/runtime-files.js";
 import { hasTokenLikeArgument, sanitizeText } from "../utils/masking.js";

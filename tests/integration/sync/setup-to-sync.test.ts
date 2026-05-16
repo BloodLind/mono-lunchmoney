@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { runSetupCommand } from "../../../src/commands/setup.command.js";
 import { loadConfig } from "../../../src/config/config.loader.js";
 import { runSync } from "../../../src/sync/sync-runner.js";
-import { sha256Hex } from "../../../src/utils/hash.js";
+import { sha256Hex } from "../../../src/utils/masking.js";
 import {
   fakeBudgetProvider,
   fakeStatementClient,

@@ -1,12 +1,12 @@
 import { Command } from "commander";
 import { createCliStyle, shouldUseColor, type CliStyle } from "../cli/color.js";
 import {
+  CliError,
   DEFAULT_DAILY_AT,
   DEFAULT_TAG,
   DEFAULT_TASK_NAME,
   EXIT_CODES
 } from "../cli/command-registry.js";
-import { CliError } from "../cli/errors.js";
 import {
   LUNCH_MONEY_API_DOCS_URL,
   LUNCH_MONEY_TOKEN_URL,

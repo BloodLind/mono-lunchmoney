@@ -28,24 +28,27 @@ import {
   type ProviderTokenSources
 } from "../credentials/credential-types.js";
 import { writeConfig } from "../config/config.writer.js";
-import type { BudgetProvider } from "../lunchmoney/budget-provider.js";
-import type { BudgetAccount } from "../lunchmoney/lunchmoney-types.js";
+import type { BudgetAccount, BudgetProvider } from "../lunchmoney/lunchmoney-types.js";
 import { LunchMoneyV1Client } from "../lunchmoney/lunchmoney-v1-client.js";
 import { MonobankClient, flattenMonobankSources } from "../monobank/mono-client.js";
 import type { MonoClientInfo, MonobankSource } from "../monobank/mono-types.js";
 import { minorUnitsToDecimalString } from "../utils/money.js";
-import { maskLongIdentifier, sanitizeText } from "../utils/masking.js";
+import { maskLongIdentifier, sanitizeText, sha256Hex } from "../utils/masking.js";
 import { formatDateOnly, parseFlexibleLocalDate } from "../utils/date.js";
-import { DEFAULT_DAILY_AT, DEFAULT_TAG, DEFAULT_TASK_NAME, EXIT_CODES } from "../cli/command-registry.js";
+import {
+  CliError,
+  DEFAULT_DAILY_AT,
+  DEFAULT_TAG,
+  DEFAULT_TASK_NAME,
+  EXIT_CODES
+} from "../cli/command-registry.js";
 import { disableNotifications, enableNotifications } from "../notifications/notification-config.js";
-import { CliError } from "../cli/errors.js";
 import { createCommandUi } from "../cli/ui.js";
 import {
   installScheduledTask,
   type ScheduledCommand,
   type SchedulerOptions
 } from "../scheduler/windows-task-scheduler.js";
-import { sha256Hex } from "../utils/hash.js";
 
 export type SetupOptions = {
   config?: string;

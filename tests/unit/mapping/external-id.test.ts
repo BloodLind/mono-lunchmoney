@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildExternalId } from "../../../src/mapping/external-id.js";
+import { buildExternalId } from "../../../src/mapping/mono-to-lunchmoney.mapper.js";
 
 describe("external id builder", () => {
   it("is deterministic for the same account and transaction", () => {

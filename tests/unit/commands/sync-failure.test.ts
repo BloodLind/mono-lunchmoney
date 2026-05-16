@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { CliError } from "../../../src/cli/errors.js";
+import { CliError } from "../../../src/cli/command-registry.js";
 import { runSyncCommand } from "../../../src/commands/sync.command.js";
 
 describe("sync failure visibility", () => {

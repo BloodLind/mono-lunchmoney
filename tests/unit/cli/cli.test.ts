@@ -1,8 +1,64 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
-import { APP_VERSION } from "../../../src/cli/command-registry.js";
-import { createCliProgram } from "../../../src/cli.js";
-import { formatDetailedHelp } from "../../../src/commands/help.command.js";
 import { stripAnsi } from "../../../src/cli/color.js";
+import { APP_VERSION, COMMAND_NAMES } from "../../../src/cli/command-registry.js";
+import { createCliProgram, isCliEntrypoint } from "../../../src/cli.js";
+import { runConfigShow } from "../../../src/commands/config.command.js";
+import { formatDetailedHelp } from "../../../src/commands/help.command.js";
+
+const pkg = JSON.parse(readFileSync("package.json", "utf8")) as {
+  bin: Record<string, string>;
+  engines: Record<string, string>;
+  files: string[];
+};
+
+describe("CLI command surface", () => {
+  it("registers the required command groups", () => {
+    const registered = createCliProgram().commands.map((command) => command.name());
+
+    expect(registered.sort()).toEqual([...COMMAND_NAMES].sort());
+  });
+
+  it("uses explicit config path in config show output", () => {
+    let output = "";
+    runConfigShow(
+      { config: "D:\\custom\\config.json" },
+      {
+        env: { APPDATA: "C:\\Users\\Ada\\AppData\\Roaming" },
+        stdout: { write: (chunk: string) => (output += chunk) }
+      }
+    );
+
+    const plain = stripAnsi(output);
+    expect(plain).toContain("D:\\custom\\config.json");
+    expect(plain).toMatch(/Config exists:\s+no/);
+  });
+
+  it("exposes mono-lunchmoney as an installable command", () => {
+    expect(pkg.bin["mono-lunchmoney"]).toBe("./dist/cli.js");
+    expect(pkg.engines.node).toBeDefined();
+    expect(pkg.files).toContain("dist/");
+  });
+});
+
+describe("CLI entrypoint detection", () => {
+  it("matches equivalent relative and absolute paths", () => {
+    const absolute = join(process.cwd(), "dist", "cli.js");
+    const relative = join(".", "dist", "cli.js");
+
+    expect(isCliEntrypoint(pathToFileURL(absolute).href, relative)).toBe(true);
+  });
+
+  it("rejects unrelated entrypoints", () => {
+    const absolute = join(process.cwd(), "dist", "cli.js");
+
+    expect(isCliEntrypoint(pathToFileURL(absolute).href, join(".", "dist", "other.js"))).toBe(
+      false
+    );
+  });
+});
 
 describe("CLI help and version", () => {
   it("prints top-level command discovery without token values", () => {

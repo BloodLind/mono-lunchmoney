@@ -4,10 +4,9 @@ import {
   type AppConfig,
   type AccountMapping
 } from "../config/config.model.js";
-import type { BudgetProvider } from "../lunchmoney/budget-provider.js";
+import type { BudgetProvider } from "../lunchmoney/lunchmoney-types.js";
 import { mapMonoToLunchMoney } from "../mapping/mono-to-lunchmoney.mapper.js";
-import type { StatementClient } from "../monobank/statement-fetcher.js";
-import { fetchAllStatementItems } from "../monobank/statement-fetcher.js";
+import { fetchAllStatementItems, type StatementClient } from "../monobank/statement-fetcher.js";
 import { acquireLockFile, type LockCommand } from "../locking/lock-file.js";
 import { formatFailureRecord, formatSyncRecord, type LogWriter } from "../logging/logger.js";
 import { parseLocalDate } from "../utils/date.js";

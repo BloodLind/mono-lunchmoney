@@ -1,10 +1,25 @@
+import { createHash } from "node:crypto";
 import type { AccountMapping } from "../config/config.model.js";
 import type { LunchMoneyInsertTransaction } from "../lunchmoney/lunchmoney-types.js";
 import type { MonoStatementItem } from "../monobank/mono-types.js";
 import { toLocalIsoDate } from "../utils/date.js";
 import { minorUnitsToDecimalString } from "../utils/money.js";
-import { buildExternalId } from "./external-id.js";
 import { buildNotes } from "./notes-builder.js";
+
+const MAX_EXTERNAL_ID_LENGTH = 75;
+
+export function buildExternalId(monoAccountId: string, monoTransactionId: string): string {
+  const raw = `mono:${monoAccountId}:${monoTransactionId}`;
+  if (raw.length <= MAX_EXTERNAL_ID_LENGTH) {
+    return raw;
+  }
+
+  return `mono:${shortHash(monoAccountId, 16)}:${shortHash(monoTransactionId, 32)}`;
+}
+
+function shortHash(value: string, length: number): string {
+  return createHash("sha256").update(value).digest("hex").slice(0, length);
+}
 
 export function mapMonoToLunchMoney(
   tx: MonoStatementItem,

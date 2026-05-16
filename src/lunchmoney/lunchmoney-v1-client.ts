@@ -1,8 +1,7 @@
-import { EXIT_CODES } from "../cli/command-registry.js";
-import { CliError } from "../cli/errors.js";
+import { CliError, EXIT_CODES } from "../cli/command-registry.js";
 import { sanitizeText } from "../utils/masking.js";
-import type { BudgetProvider } from "./budget-provider.js";
 import type {
+  BudgetProvider,
   BudgetAccount,
   CreateBudgetAccountInput,
   ImportTransactionsInput,

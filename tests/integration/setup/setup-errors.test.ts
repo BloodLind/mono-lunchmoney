@@ -2,7 +2,7 @@ import { mkdtempSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { CliError } from "../../../src/cli/errors.js";
+import { CliError } from "../../../src/cli/command-registry.js";
 import { runSetupCommand } from "../../../src/commands/setup.command.js";
 import { fakeBudgetProvider } from "../../fixtures/providers.js";
 

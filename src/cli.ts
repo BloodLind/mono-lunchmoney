@@ -3,7 +3,7 @@ import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createProgram } from "./cli/program.js";
-import { exitCodeFor, messageFor } from "./cli/errors.js";
+import { exitCodeFor, messageFor } from "./cli/command-registry.js";
 import { createBackfillCommand } from "./commands/backfill.command.js";
 import { createConfigCommand } from "./commands/config.command.js";
 import { createCredentialsCommand } from "./commands/credentials.command.js";

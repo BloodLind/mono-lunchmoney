@@ -1,6 +1,5 @@
 import { open, readFile, stat, unlink } from "node:fs/promises";
-import { EXIT_CODES } from "../cli/command-registry.js";
-import { CliError } from "../cli/errors.js";
+import { CliError, EXIT_CODES } from "../cli/command-registry.js";
 import { ensureParentDirectory } from "../config/runtime-files.js";
 
 export type LockCommand = "sync" | "backfill";

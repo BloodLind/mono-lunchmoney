@@ -1,10 +1,24 @@
-import { EXIT_CODES } from "../cli/command-registry.js";
-import { CliError } from "../cli/errors.js";
+import { CliError, EXIT_CODES } from "../cli/command-registry.js";
 import { sanitizeText } from "../utils/masking.js";
-import { currencyCodeToIso } from "./currency-map.js";
 import type { MonoAccount, MonoClientInfo, MonobankSource, MonoStatementItem } from "./mono-types.js";
 
 export type FetchLike = typeof fetch;
+
+const CURRENCY_CODES = new Map<number, string>([
+  [980, "uah"],
+  [840, "usd"],
+  [978, "eur"],
+  [985, "pln"],
+  [826, "gbp"],
+  [203, "czk"]
+]);
+
+function currencyCodeToIso(code: number | undefined): string {
+  if (code === undefined) {
+    return "uah";
+  }
+  return CURRENCY_CODES.get(code) ?? String(code);
+}
 
 export class MonobankClient {
   constructor(

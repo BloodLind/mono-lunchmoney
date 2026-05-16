@@ -1,8 +1,7 @@
 import { Command } from "commander";
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
-import { EXIT_CODES } from "../cli/command-registry.js";
-import { CliError } from "../cli/errors.js";
+import { CliError, EXIT_CODES } from "../cli/command-registry.js";
 import { createCommandUi } from "../cli/ui.js";
 import {
   credentialStatusesWithEnvironment,

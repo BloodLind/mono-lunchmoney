@@ -2,8 +2,7 @@ import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { EXIT_CODES } from "../cli/command-registry.js";
-import { CliError } from "../cli/errors.js";
+import { CliError, EXIT_CODES } from "../cli/command-registry.js";
 import { ensureParentDirectory, getCredentialRecordPath } from "../config/runtime-files.js";
 import { sanitizeText } from "../utils/masking.js";
 import {

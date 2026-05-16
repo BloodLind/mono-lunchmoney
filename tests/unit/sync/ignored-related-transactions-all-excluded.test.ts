@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { runSync } from "../../../src/sync/sync-runner.js";
 import { accountMapping, appConfig, ignoredMonobankAccount } from "../../fixtures/config.js";
 import { fakeBudgetProvider, fakeStatementClient, monoTransferFromIgnoredSource } from "../../fixtures/providers.js";
-import { sha256Hex } from "../../../src/utils/hash.js";
+import { sha256Hex } from "../../../src/utils/masking.js";
 
 describe("ignored related transactions during sync when all are excluded", () => {
   it("reports zero eligible imports without submitting an empty Lunch Money batch", async () => {

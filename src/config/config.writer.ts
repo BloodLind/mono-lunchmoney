@@ -1,7 +1,6 @@
 import { rename, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { AppConfig } from "./config.model.js";
-import type { NotificationConfig } from "./config.model.js";
+import type { AppConfig, NotificationConfig } from "./config.model.js";
 import { ensureParentDirectory } from "./runtime-files.js";
 
 const SECRET_KEY_PATTERN = /(?:token|secret|password|authorization)/i;

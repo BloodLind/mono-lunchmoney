@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 const TOKEN_KEY_PATTERN = /\b(?:MONO_TOKEN|LUNCHMONEY_TOKEN|X-Token|Authorization)\b/gi;
 const TOKEN_OPTION_PATTERN = /^--(?:mono-|lunchmoney-)?token(?:=.*)?$/i;
 const TOKENISH_OPTION_PATTERN = /^--.*token(?:=.*)?$/i;
@@ -87,4 +89,8 @@ export function maskLongIdentifier(value: string): string {
     return value;
   }
   return `${value.slice(0, 6)}...${value.slice(-4)}`;
+}
+
+export function sha256Hex(value: string): string {
+  return createHash("sha256").update(value.trim().toLowerCase(), "utf8").digest("hex");
 }

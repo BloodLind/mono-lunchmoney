@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { runSync } from "../../../src/sync/sync-runner.js";
 import { accountMapping, appConfig } from "../../fixtures/config.js";
 import { fakeBudgetProvider, fakeStatementClient, monoStatementItem } from "../../fixtures/providers.js";
-import { sha256Hex } from "../../../src/utils/hash.js";
+import { sha256Hex } from "../../../src/utils/masking.js";
 
 describe("ignored related transactions during sync", () => {
   it("does not import transactions on tracked accounts when counterparty is an ignored account", async () => {

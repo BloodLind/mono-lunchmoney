@@ -11,7 +11,7 @@ import {
   monoStatementItem,
   monoTransferFromIgnoredSource
 } from "../../fixtures/providers.js";
-import { sha256Hex } from "../../../src/utils/hash.js";
+import { sha256Hex } from "../../../src/utils/masking.js";
 
 describe("backfill ignored transfer sources", () => {
   it("uses the shared ignored transfer filtering for backfill windows", async () => {

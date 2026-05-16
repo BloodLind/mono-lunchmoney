@@ -1,13 +1,12 @@
 import { Command } from "commander";
-import { CliError } from "../cli/errors.js";
-import { EXIT_CODES } from "../cli/command-registry.js";
+import { CliError, EXIT_CODES } from "../cli/command-registry.js";
 import { loadConfig } from "../config/config.loader.js";
 import { getSyncableAccountMappings } from "../config/config.model.js";
 import { resolveRuntimePaths } from "../config/paths.js";
 import { createDefaultCredentialStore, resolveProviderTokens } from "../config/tokens.js";
 import type { CredentialStore } from "../credentials/credential-store.js";
 import { createFileLogWriter, withConsoleLogWriter, type LogWriter } from "../logging/logger.js";
-import type { BudgetProvider } from "../lunchmoney/budget-provider.js";
+import type { BudgetProvider } from "../lunchmoney/lunchmoney-types.js";
 import { LunchMoneyV1Client } from "../lunchmoney/lunchmoney-v1-client.js";
 import { MonobankClient } from "../monobank/mono-client.js";
 import { MonoRateLimiter } from "../monobank/mono-rate-limiter.js";

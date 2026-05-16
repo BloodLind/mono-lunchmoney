@@ -2,8 +2,7 @@ import { Command } from "commander";
 import { formatConfigShow, loadConfig } from "../config/config.loader.js";
 import { writeConfig, withNotificationConfig } from "../config/config.writer.js";
 import { resolveRuntimePaths } from "../config/paths.js";
-import { EXIT_CODES } from "../cli/command-registry.js";
-import { CliError } from "../cli/errors.js";
+import { CliError, EXIT_CODES } from "../cli/command-registry.js";
 import { createCommandUi } from "../cli/ui.js";
 import {
   disableNotifications,

@@ -1,7 +1,6 @@
 import type { IgnoredMonobankAccount } from "../config/config.model.js";
 import type { MonoStatementItem } from "../monobank/mono-types.js";
-import { sha256Hex } from "../utils/hash.js";
-import { sanitizeText } from "../utils/masking.js";
+import { sanitizeText, sha256Hex } from "../utils/masking.js";
 
 export type IgnoredTransferMatchReason = "counter-iban" | "masked-pan" | "none";
 

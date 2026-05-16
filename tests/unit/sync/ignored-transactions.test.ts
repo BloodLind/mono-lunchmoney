@@ -4,7 +4,7 @@ import {
   isTransactionRelatedToIgnoredAccount
 } from "../../../src/sync/ignored-transactions.js";
 import { ignoredMonobankAccount } from "../../fixtures/config.js";
-import { sha256Hex } from "../../../src/utils/hash.js";
+import { sha256Hex } from "../../../src/utils/masking.js";
 import { monoStatementItem } from "../../fixtures/providers.js";
 
 describe("ignored transaction matching", () => {

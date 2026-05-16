@@ -1,5 +1,4 @@
-import { EXIT_CODES } from "../cli/command-registry.js";
-import { CliError } from "../cli/errors.js";
+import { CliError, EXIT_CODES } from "../cli/command-registry.js";
 import type { MonoRateLimiter } from "./mono-rate-limiter.js";
 import type { MonoStatementItem } from "./mono-types.js";
 

@@ -1,4 +1,4 @@
-import type { BudgetProvider } from "../../src/lunchmoney/budget-provider.js";
+import type { BudgetProvider } from "../../src/lunchmoney/lunchmoney-types.js";
 import type {
   BudgetAccount,
   CreateBudgetAccountInput,

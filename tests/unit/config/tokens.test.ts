@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CliError } from "../../../src/cli/errors.js";
+import { CliError } from "../../../src/cli/command-registry.js";
 import {
   credentialStatusesWithEnvironment,
   resolveProviderTokens,

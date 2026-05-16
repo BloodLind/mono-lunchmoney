@@ -41,3 +41,9 @@ export type ImportTransactionsResult = {
   inserted?: number;
   duplicatesOrIgnored?: number;
 };
+
+export interface BudgetProvider {
+  listAccounts(): Promise<BudgetAccount[]>;
+  createAccount(input: CreateBudgetAccountInput): Promise<BudgetAccount>;
+  importTransactions(input: ImportTransactionsInput): Promise<ImportTransactionsResult>;
+}
