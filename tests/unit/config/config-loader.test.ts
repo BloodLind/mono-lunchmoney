@@ -82,6 +82,18 @@ describe("config loader", () => {
     expect(parsed.ignoredMonobankAccounts).toEqual([]);
   });
 
+  it("updates Lunch Money balances by default for new imports", () => {
+    const parsed = parseAppConfig({
+      schemaVersion: 1,
+      lunchMoneyApiVersion: "v1",
+      lookbackDays: 31,
+      defaultTag: "monobank-sync",
+      accounts: []
+    });
+
+    expect(parsed.skipBalanceUpdate).toBe(false);
+  });
+
   it("rejects malformed ignored transfer source IBAN hashes", () => {
     expect(() =>
       parseAppConfig(

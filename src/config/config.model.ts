@@ -67,6 +67,7 @@ export const appConfigSchema = z
     schemaVersion: z.number().int().positive().default(1),
     lunchMoneyApiVersion: z.literal("v1").default("v1"),
     lookbackDays: z.number().int().min(1).max(31).default(31),
+    skipBalanceUpdate: z.boolean().default(false),
     baselineDate: dateOnlySchema.optional(),
     defaultTag: z.string().min(1).default(DEFAULT_TAG),
     scheduler: schedulerConfigSchema.optional(),

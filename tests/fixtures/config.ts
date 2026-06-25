@@ -40,6 +40,7 @@ export function appConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     schemaVersion: 1,
     lunchMoneyApiVersion: "v1",
     lookbackDays: 31,
+    skipBalanceUpdate: false,
     defaultTag: "monobank-sync",
     ignoredMonobankAccounts: [],
     notifications: {

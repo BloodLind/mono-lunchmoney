@@ -167,7 +167,7 @@ async function processAccount(
           skipDuplicates: true,
           checkForRecurring: false,
           debitAsNegative: true,
-          skipBalanceUpdate: true
+          skipBalanceUpdate: options.config.skipBalanceUpdate
         });
         insertedCount += importResult.inserted ?? transactions.length;
         duplicateOrIgnoredCount += importResult.duplicatesOrIgnored ?? 0;

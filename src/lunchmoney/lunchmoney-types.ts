@@ -33,7 +33,7 @@ export type ImportTransactionsInput = {
   skipDuplicates: true;
   checkForRecurring: false;
   debitAsNegative: true;
-  skipBalanceUpdate: true;
+  skipBalanceUpdate: boolean;
 };
 
 export type ImportTransactionsResult = {

@@ -42,6 +42,7 @@ export function sanitizedConfigSummary(config: AppConfig): unknown {
     schemaVersion: config.schemaVersion,
     lunchMoneyApiVersion: config.lunchMoneyApiVersion,
     lookbackDays: config.lookbackDays,
+    skipBalanceUpdate: config.skipBalanceUpdate,
     baselineDate: config.baselineDate,
     defaultTag: config.defaultTag,
     scheduler: config.scheduler,

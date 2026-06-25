@@ -29,7 +29,26 @@ describe("sync runner success", () => {
 
     expect(result.hadFailure).toBe(false);
     expect(provider.imports).toHaveLength(1);
+    expect(provider.imports[0].skipBalanceUpdate).toBe(false);
     expect(provider.imports[0].transactions[0]).toMatchObject({ status: "uncleared", tags: ["monobank-sync"] });
     expect(logs.success.join("")).toContain("Sync finished successfully");
+  });
+
+  it("can keep Lunch Money asset balances unchanged when configured", async () => {
+    const logs = memoryLog();
+    const provider = fakeBudgetProvider();
+
+    await runSync({
+      mode: "sync",
+      config: appConfig({ skipBalanceUpdate: true }),
+      configPath: "config.json",
+      lockPath: path.join(mkdtempSync(path.join(os.tmpdir(), "mono-sync-skip-balance-")), "sync.lock"),
+      statementClient: fakeStatementClient([[monoStatementItem()]]),
+      budgetProvider: provider,
+      logWriter: logs.writer,
+      now: new Date("2026-05-16T00:00:00")
+    });
+
+    expect(provider.imports[0].skipBalanceUpdate).toBe(true);
   });
 });

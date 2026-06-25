@@ -24,7 +24,7 @@ describe("Lunch Money v1 client", () => {
       skipDuplicates: true,
       checkForRecurring: false,
       debitAsNegative: true,
-      skipBalanceUpdate: true
+      skipBalanceUpdate: false
     });
 
     expect(bodies).toHaveLength(2);
@@ -33,7 +33,7 @@ describe("Lunch Money v1 client", () => {
       apply_rules: false,
       skip_duplicates: true,
       debit_as_negative: true,
-      skip_balance_update: true
+      skip_balance_update: false
     });
   });
 });

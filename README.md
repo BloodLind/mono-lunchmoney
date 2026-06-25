@@ -108,6 +108,8 @@ Use `--config "C:\path\config.json"` to override the config path.
 - Do not pass API tokens as CLI arguments.
 - API tokens are never included in the scheduled command.
 - Imported transactions are created as `uncleared`.
+- New imports update the mapped Lunch Money manual account balance by default. Set
+  `"skipBalanceUpdate": true` in `config.json` to keep balances unchanged during imports.
 - Sync/backfill are safe to rerun because `external_id` is deterministic.
 - Lunch Money API v1 is used.
 - Windows desktop notifications are supported for start, failure, and success events.

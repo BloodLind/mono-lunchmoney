@@ -187,6 +187,7 @@ export async function runSetupCommand(options: SetupOptions, deps: SetupDeps = {
       schemaVersion: 1,
       lunchMoneyApiVersion: "v1",
       lookbackDays: 31,
+      skipBalanceUpdate: false,
       baselineDate,
       defaultTag,
       notifications,
